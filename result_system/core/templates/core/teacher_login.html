@@ -1,0 +1,24 @@
+{% extends "base.html" %}
+
+{% block content %}
+
+<div class="container">
+
+<h2 style="text-align:center;">Teacher Login</h2>
+
+<form method="post">
+{% csrf_token %}
+
+<label>Username</label>
+<input type="text" name="username">
+
+<label>Password</label>
+<input type="password" name="password">
+
+<button type="submit">Login</button>
+
+</form>
+
+</div>
+
+{% endblock %}

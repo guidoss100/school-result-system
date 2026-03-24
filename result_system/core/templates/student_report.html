@@ -1,0 +1,33 @@
+<h2>Student Report Card</h2>
+
+<p><strong>Name:</strong> {{ student.name }}</p>
+<p><strong>Class:</strong> {{ student.student_class }}</p>
+
+<table border="1" cellpadding="10">
+    <tr>
+        <th>Subject</th>
+        <th>Class Score</th>
+        <th>Exam Score</th>
+        <th>Total</th>
+        <th>Position</th>
+        <th>Grade</th>
+        <th>Remark</th>
+    </tr>
+
+    {% for score in scores %}
+    <tr>
+        <td>{{ score.subject }}</td>
+        <td>{{ score.class_score }}</td>
+        <td>{{ score.exam_score }}</td>
+        <td>{{ score.total }}</td>
+        <td>{{ position }}</td>
+        <td>{{ score.grade }}</td>
+        <td>{{ score.remark }}</td>
+    </tr>
+    {% endfor %}
+</table>
+
+<br>
+
+<p><strong>Total Marks:</strong> {{ total_marks }}</p>
+<p><strong>Position in Class:</strong> {{ student.overall_position }}</p>

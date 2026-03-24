@@ -1,0 +1,39 @@
+{% load static %}
+<h2>Class Results - {{ school_class.name }} - Term {{ term }}
+
+<link rel="stylesheet" href="{% static 'css/style.css' %}">
+</h2>
+
+<table border="1">
+<tr>
+<th>Student Name</th>
+<th>Position</th>
+</tr>
+
+{% for student in students %}
+<tr>
+<td>{{ student.first_name }} {{ student.last_name }}</td>
+<td>{{ student.overall_position }}</td>
+</tr>
+{% endfor %}
+
+</table>
+<img src="{% static 'images/CREST.png' %}" class="watermark">
+
+
+<hr>
+
+<style>
+.watermark{
+position:fixed;
+top:35%;
+left:40%;
+opacity:0.06;
+z-index:-1;
+width:350px;
+}
+</style>
+<footer style="text-align:center;margin-top:40px;color:gray;">
+<p>POWERED BY GUIDOSS MULTIMEDIA</p>
+
+</footer>

@@ -1,0 +1,123 @@
+{% load static %}
+<!DOCTYPE html>
+<html>
+<head>
+    <title>New Generation Prep.</title>
+
+    <style>
+
+        body{
+            font-family: Arial, sans-serif;
+            margin:0;
+            padding:0;
+            background:#f4f6f9;
+        }
+
+        /* HEADER */
+
+        .header{
+            background:#0d47a1;
+            color:white;
+            text-align:center;
+            padding:15px;
+            font-size:22px;
+            font-weight:bold;
+        }
+
+        /* PAGE CONTENT CENTER */
+
+        .container{
+            width:450px;
+            margin:60px auto;
+            background:white;
+            padding:25px;
+            border-radius:8px;
+            box-shadow:0 0 10px rgba(0,0,0,0.1);
+        }
+
+        /* WATERMARK */
+
+        body::before{
+            content:"";
+            position:fixed;
+            top:60%;
+            left:50%;
+            transform:translate(-50%,-50%);
+            background:url("{% static 'images/CREST.png' %}") no-repeat center;
+            background-size:700px;
+            opacity:0.07;
+            width:100%;
+            height:100%;
+            pointer-events:none;
+        }
+
+        /* FORM INPUTS */
+
+        input, select{
+            width:100%;
+            padding:10px;
+            margin-top:6px;
+            margin-bottom:15px;
+        }
+
+        button{
+            background:#0d47a1;
+            color:white;
+            border:none;
+            padding:10px 20px;
+            cursor:pointer;
+        }
+
+        /* FOOTER */
+
+        .footer{
+            text-align:center;
+            margin-top:40px;
+            padding:10px;
+            color:#555;
+            font-size:13px;
+        }
+
+        /* Arrange checkbox list into columns */
+        .checkbox-group ul{
+            display: grid;
+            grid-template-columns: repeat(3, 1fr); /* 3 columns */
+            gap: 10px;
+            list-style: none;
+            padding: 0;
+        }
+
+        .checkbox-group li{
+            display: flex;
+            align-items: center;
+        }
+
+        /* Better spacing */
+        .checkbox-group label{
+            display: block;
+        }
+
+        .signup-container{
+            width: 85% !important;
+            max-width: 1000px;
+        }
+
+    </style>
+
+</head>
+
+<body>
+
+<div class="header">
+New Generation Preparatory School
+</div>
+
+{% block content %}
+{% endblock %}
+
+<div class="footer">
+POWERED BY GUIDOSS MULTIMEDIA
+</div>
+
+</body>
+</html>

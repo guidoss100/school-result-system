@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Enter Marks</title>
+    <style>
+        body { font-family: Arial; margin: 20px; }
+        table { border-collapse: collapse; width: 100%; }
+        th, td { border: 1px solid #ddd; padding: 8px; text-align: center; }
+        th { background-color: #4CAF50; color: white; }
+        input[type="number"] { width: 60px; }
+        .btn { padding: 6px 12px; background-color: #4CAF50; color: white; border: none; cursor: pointer; }
+        .btn:hover { background-color: #45a049; }
+    </style>
+</head>
+<body>
+    <h1>Enter Marks for {{ school_class.name }} {{ school_class.section }} ({{ school_class.level }})</h1>
+    <form method="POST">
+        {% csrf_token %}
+        <table>
+    <tr>
+        <th>Student</th>
+        {% for subject in subjects %}
+        <th>{{ subject.name }}<br>Marks / Grade</th>
+        {% endfor %}
+    </tr>
+    {% for student in students %}
+    <tr>
+        <td>{{ student.first_name }} {{ student.last_name }}</td>
+        {% for subject in subjects %}
+        <td>
+            <input type="number" name="{{ student.id }}_{{ subject.id }}" step="0.01" min="0" max="100"
+                value="{{ marks_data.student.id.subject.id.marks|default_if_none:'' }}">
+            <br>
+            <strong>{{ marks_data.student.id.subject.id.grade }}</strong>
+        </td>
+        {% endfor %}
+    </tr>
+    {% endfor %}
+</table>
+        <br>
+        <button type="submit" class="btn">Submit Marks</button>
+    </form>
+    <br>
+    <a href="{% url 'teacher_dashboard' %}">Back to Dashboard</a>
+</body>
+<footer style="text-align:center;margin-top:40px;color:gray;">
+
+<hr>
+
+<p>POWERED BY GUIDOSS MULTIMEDIA</p>
+
+</footer>
+</html>

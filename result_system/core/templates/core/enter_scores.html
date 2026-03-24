@@ -1,0 +1,182 @@
+{% load static %}
+
+{% load custom_filters %}
+<h2>Enter Student Scores
+<link rel="stylesheet" href="{% static 'css/style.css' %}">
+</h2>
+
+<form method="POST">
+{% csrf_token %}
+
+<label>Class</label>
+<select name="class_id">
+{% for c in classes %}
+<option value="{{ c.id }}" {% if selected_class == c.id|stringformat:"s" %}selected{% endif %}>
+{{ c.name }}
+</option>
+{% endfor %}
+</select>
+
+
+<br><br>
+
+<label>Subject</label>
+<select name="subject_id">
+{% for s in subjects %}
+<option value="{{ s.id }}" {% if selected_subject == s.id|stringformat:"s" %}selected{% endif %}>
+{{ s.name }}
+</option>
+{% endfor %}
+</select>
+
+
+<br><br>
+
+<label>Term</label>
+<select name="term">
+<option value="1" {% if selected_term == "1" %}selected{% endif %}>Term 1</option>
+<option value="2" {% if selected_term == "2" %}selected{% endif %}>Term 2</option>
+<option value="3" {% if selected_term == "3" %}selected{% endif %}>Term 3</option>
+</select>
+
+
+<br><br>
+
+<button type="submit" name="load_students">Load Students</button>
+
+{% if students %}
+
+<br><br>
+
+<body>
+
+
+
+<table border="1" width="100%">
+
+<tr>
+<th>Student Name</th>
+<th>Class Score (50)</th>
+<th>Exam Score (50)</th>
+<th>Total</th>
+<th>Grade</th>
+<th>Position</th>
+<th>Remark</th>
+</tr>
+
+{% for student in students %}
+<tr>
+
+<td>{{ student.first_name }} {{ student.last_name }}</td>
+
+{% with score=existing_scores|get_item:student.id %}
+
+<td>
+<input type="number"
+name="class_{{ student.id }}"
+max="50"
+min="0"
+class="class-score"
+value="{{ score.class_score|default:'' }}">
+</td>
+
+<td>
+<input type="number"
+name="exam_{{ student.id }}"
+max="50"
+min="0"
+class="exam-score"
+value="{{ score.exam_score|default:'' }}">
+</td>
+
+<td class="total">
+{{ score.total|default:"0" }}
+</td>
+
+<td>
+{{ score.grade|default:"-" }}
+</td>
+
+<td>
+{{ score.position|default:"-" }}
+</td>
+
+<td>
+{{ score.remark|default:"-" }}
+</td>
+
+{% endwith %}
+
+</tr>
+{% endfor %}
+
+</table>
+
+<br>
+
+<button type="submit" name="save_scores">Save Scores</button>
+
+{% endif %}
+
+</form>
+
+<script>
+
+function calculateTotals() {
+
+    const rows = document.querySelectorAll("table tr");
+
+    rows.forEach(row => {
+
+        const classInput = row.querySelector(".class-score");
+        const examInput = row.querySelector(".exam-score");
+        const totalCell = row.querySelector(".total");
+
+        if(classInput && examInput){
+
+            function updateTotal(){
+
+                let classScore = parseInt(classInput.value) || 0;
+                let examScore = parseInt(examInput.value) || 0;
+
+                if(classScore > 50) classInput.value = 50;
+                if(examScore > 50) examInput.value = 50;
+
+                let total = classScore + examScore;
+
+                totalCell.textContent = total;
+            }
+
+            classInput.addEventListener("input", updateTotal);
+            examInput.addEventListener("input", updateTotal);
+
+            updateTotal();
+        }
+
+    });
+
+}
+
+document.addEventListener("DOMContentLoaded", calculateTotals);
+
+</script>
+
+</body>
+<img src="{% static 'images/CREST.png' %}" class="watermark">
+<style>
+.watermark{
+position:fixed;
+top:35%;
+left:40%;
+opacity:0.06;
+z-index:-1;
+width:350px;
+}
+</style>
+<footer style="text-align:center;margin-top:40px;color:gray;">
+
+<hr>
+
+<p>POWERED BY GUIDOSS MULTIMEDIA</p>
+
+</footer>

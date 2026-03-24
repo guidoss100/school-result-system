@@ -1,0 +1,25 @@
+{% extends "base.html" %}
+
+{% block content %}
+
+<div class="container">
+
+<h2>Welcome {{ teacher.full_name }}</h2>
+
+<p><b>Level:</b> {{ teacher.level }}</p>
+
+<h3>Your Subjects</h3>
+
+<ul>
+{% for subject in subjects %}
+<li>{{ subject.name }}</li>
+{% endfor %}
+</ul>
+
+<a href="{% url 'enter_scores' %}">Enter Scores</a>
+
+<a href="{% url 'approved_results' %}">View Approved Results</a>
+
+</div>
+
+{% endblock %}

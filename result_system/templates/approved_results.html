@@ -1,0 +1,76 @@
+{% extends "base.html" %}
+{% block content %}
+
+<h3 style="text-align:center;">
+Class: {{ teacher.class_teacher_of }}
+</h3>
+<h2>Approved Results</h2>
+
+<form method="get">
+
+
+
+<select name="term">
+<option value="1">Term 1</option>
+<option value="2">Term 2</option>
+<option value="3">Term 3</option>
+</select>
+
+<button type="submit">Load</button>
+
+</form>
+
+{% if students %}
+
+{% for student in students %}
+
+<h3>{{ student.first_name }} {{ student.last_name }}</h3>
+
+<table border="1" width="100%">
+<tr>
+<th>Subject</th>
+<th>Total</th>
+<th>Grade</th>
+<th>Position</th>
+</tr>
+
+{% for score in student.scores %}
+<tr>
+<td>{{ score.subject.name }}</td>
+<td>{{ score.total }}</td>
+<td>{{ score.grade }}</td>
+<td>{{ score.position }}</td>
+</tr>
+{% endfor %}
+
+</table>
+
+<br>
+
+<form method="post">
+{% csrf_token %}
+
+<input type="hidden" name="student_id" value="{{ student.id }}">
+<input type="hidden" name="term" value="{{ selected_term }}">
+
+<label>Attendance</label>
+<input type="number" name="attendance" value="{{ student.summary.attendance_days }}">
+
+<br>
+
+<label>Class Teacher Remark</label>
+<textarea name="remark">{{ student.summary.class_teacher_remark }}</textarea>
+
+<br>
+
+<button type="submit">Save</button>
+
+</form>
+
+<hr>
+
+{% endfor %}
+
+{% endif %}
+
+{% endblock %}

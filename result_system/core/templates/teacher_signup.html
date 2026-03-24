@@ -1,0 +1,47 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block content %}
+
+<div class="container signup-container">
+
+<h2 style="text-align:center;">Teacher Signup</h2>
+
+<form method="post">
+{% csrf_token %}
+
+{{ form.full_name.label_tag }}
+{{ form.full_name }}
+
+{{ form.username.label_tag }}
+{{ form.username }}
+
+{{ form.email.label_tag }}
+{{ form.email }}
+
+{{ form.level.label_tag }}
+{{ form.level }}
+
+{{ form.password.label_tag }}
+{{ form.password }}
+
+{{ form.confirm_password.label_tag }}
+{{ form.confirm_password }}
+
+<p><b>Select Subjects:</b></p>
+
+<div class="checkbox-group">
+    {% for checkbox in form.subjects %}
+        <label style="display:inline-block; width:30%; margin-bottom:10px;">
+            {{ checkbox.tag }} {{ checkbox.choice_label }}
+        </label>
+    {% endfor %}
+</div>
+
+<button type="submit">Signup</button>
+
+</form>
+
+</div>
+
+{% endblock %}
