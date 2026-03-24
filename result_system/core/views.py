@@ -10,6 +10,9 @@ from django.contrib.auth.decorators import login_required
 from django.http import HttpResponse
 from django.template.loader import render_to_string
 
+def home(request):
+    return HttpResponse("🚀 School Result System is Live!")
+
 def promote_students():
     
     students = Student.objects.all()
