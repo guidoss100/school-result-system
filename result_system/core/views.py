@@ -9,7 +9,6 @@ from .models import Student, Score, ResultSummary
 from django.contrib.auth.decorators import login_required
 from django.http import HttpResponse
 from django.template.loader import render_to_string
-from weasyprint import HTML
 
 def promote_students():
     
@@ -418,7 +417,6 @@ def report_card_pdf(request, student_id, term):
     response = HttpResponse(content_type='application/pdf')
     response['Content-Disposition'] = f'filename="report_{student.id}.pdf"'
 
-    HTML(string=html_string).write_pdf(response)
 
     return response
 
