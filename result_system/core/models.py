@@ -94,9 +94,7 @@ class Score(models.Model):
 
     locked = models.BooleanField(default=False)
 
-    @property
-    def total(self):
-        return self.class_score + self.exam_score
+    
 
     @property
     def grade(self):
@@ -119,19 +117,7 @@ class Score(models.Model):
             elif total >= 40: return "E"
             else: return "F"
 
-    @property
-    def position(self):
-        scores = Score.objects.filter(
-            subject=self.subject,
-            term=self.term,
-            student__school_class=self.student.school_class
-        ).order_by('-class_score', '-exam_score')
-
-        rank = 1
-        for score in scores:
-            if score.student == self.student:
-                return rank
-            rank += 1
+    
 
     @property
     def remark(self):
