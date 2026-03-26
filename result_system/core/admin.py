@@ -62,9 +62,7 @@ class ScoreAdmin(admin.ModelAdmin):
         'term',
         'class_score',
         'exam_score',
-        'total',
         'grade',
-        'position',
         'approved_by_admin1',
         'approved_by_admin2'
     )
@@ -75,9 +73,7 @@ class ScoreAdmin(admin.ModelAdmin):
         "term",
         "class_score",
         "exam_score",
-        "total",
         "grade",
-        "position",
     )
 
     list_filter = ("term", "subject")
