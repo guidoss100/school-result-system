@@ -267,13 +267,6 @@ def enter_scores(request):
                 
 
 
-            # calculate positions
-            scores = Score.objects.filter(
-                subject=subject,
-                term=selected_term,
-                student__school_class_id=selected_class
-            ).order_by("-class_score", "-exam_score")
-
 
             # reload the scores so existing_scores has updated objects
             scores = Score.objects.filter(
@@ -281,6 +274,20 @@ def enter_scores(request):
                 term=selected_term,
                 student__school_class_id=selected_class
             )
+
+            scores = list(scores)
+
+            # calculate total
+            for s in scores:
+                s.total = s.class_score + s.exam_score
+
+            # sort properly
+            scores.sort(key=lambda x: x.total, reverse=True)
+
+            # assign positions
+            for i, s in enumerate(scores, start=1):
+                s.position = i
+
             existing_scores = {s.student.id: s for s in scores}
 
         # ✅ HANDLE GET REQUEST (very important fix)

@@ -118,4 +118,4 @@ class ResultSummaryAdmin(admin.ModelAdmin):
     def get_readonly_fields(self, request, obj=None):
         if not request.user.is_superuser:
             return ["attendance_days", "class_teacher_remark"]
-        return ["attendance_days", "class_teacher_remark", "next_term_bill"]
+        return ["attendance_days", "class_teacher_remark"]
