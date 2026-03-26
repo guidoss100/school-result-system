@@ -90,7 +90,7 @@ WSGI_APPLICATION = 'result_system.wsgi.application'
 
 DATABASES = {
     'default': dj_database_url.parse(
-        os.environ.get("DATABASE_URL"),
+        "postgresql://postgres.hwrgrmhrmqndnlhigbte:db-guidoss100@aws-1-eu-central-2.pooler.supabase.com:6543/postgres",
         conn_max_age=600,
         ssl_require=True
     )

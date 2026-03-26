@@ -9,7 +9,6 @@ urlpatterns = [
     path("teacher/dashboard/", views.teacher_dashboard, name="teacher_dashboard"),
     path("report/pdf/<int:student_id>/<int:term>/", views.report_card_pdf, name="report_pdf"),
     path('report/<int:student_id>/', student_report, name='student_report'),
-    path('create-admin/', views.create_admin),
     path('teacher/enter-scores/', views.enter_scores, name='enter_scores'),
     path("approved-results/", views.approved_results, name="approved_results"),
     path('enter-scores/', views.enter_scores, name='enter_scores'),
