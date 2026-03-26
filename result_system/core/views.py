@@ -12,9 +12,13 @@ from django.template.loader import render_to_string
 
 
 def home(request):
+    return render(request, 'home.html')
+
+def create_admin(request):
     if not User.objects.filter(username='nambiagariba').exists():
         User.objects.create_superuser('nambiagariba', 'nambiagariba28@gmail.com', 'Nanabasan')
-    return render(request, 'home.html')
+        return HttpResponse("Superuser created successfully")
+    return HttpResponse("Superuser already exists")
 
 def promote_students():
     
