@@ -2,12 +2,12 @@ from django.db import models
 from django.contrib.auth.models import User
 
 class SchoolClass(models.Model):
-    name = models.CharField(max_length=50)
+    name = models.CharField(max_length=100)
     LEVEL_CHOICES = (
         ('Primary', 'Primary'),
         ('JHS', 'JHS'),
     )
-    level = models.CharField(max_length=10, choices=LEVEL_CHOICES)
+    level = models.CharField(max_length=100, choices=LEVEL_CHOICES)
 
     def __str__(self):
         return self.name
@@ -17,11 +17,11 @@ class Student(models.Model):
         ("Primary", "Primary"),
         ("JHS", "JHS"),
     )
-    first_name = models.CharField(max_length=50)
-    last_name = models.CharField(max_length=50)
-    admission_number = models.CharField(max_length=20, unique=True)
+    first_name = models.CharField(max_length=100)
+    last_name = models.CharField(max_length=100)
+    admission_number = models.CharField(max_length=100, unique=True)
     school_class = models.ForeignKey(SchoolClass, on_delete=models.CASCADE)
-    level = models.CharField(max_length=10, choices=LEVEL_CHOICES)
+    level = models.CharField(max_length=100, choices=LEVEL_CHOICES)
     date_of_birth = models.DateField()
 
     def __str__(self):
@@ -52,7 +52,7 @@ class Subject(models.Model):
         ('JHS', 'JHS'),
     ]
     name = models.CharField(max_length=100)
-    level = models.CharField(max_length=10, choices=LEVEL_CHOICES)
+    level = models.CharField(max_length=100, choices=LEVEL_CHOICES)
 
     def __str__(self):
         return f"{self.name} ({self.level})"
@@ -64,7 +64,7 @@ class Teacher(models.Model):
     ]
     user = models.OneToOneField(User, on_delete=models.CASCADE)
     full_name = models.CharField(max_length=200)
-    level = models.CharField(max_length=10, choices=LEVEL_CHOICES)
+    level = models.CharField(max_length=100, choices=LEVEL_CHOICES)
     subjects = models.ManyToManyField(Subject)
     approved = models.BooleanField(default=False)
 
