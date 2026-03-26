@@ -86,7 +86,7 @@ class Score(models.Model):
         ('2', 'Term 2'),
         ('3', 'Term 3'),
     ]
-    term = models.CharField(max_length=1, choices=TERM_CHOICES)
+    term = models.CharField(max_length=10, choices=TERM_CHOICES)
     class_score = models.IntegerField()
     exam_score = models.IntegerField()
     approved_by_admin1 = models.BooleanField(default=False)
@@ -159,7 +159,7 @@ class Score(models.Model):
 # NEW MODEL FOR REPORT SUMMARY
 class ResultSummary(models.Model):
     student = models.ForeignKey(Student, on_delete=models.CASCADE)
-    term = models.CharField(max_length=1, choices=Score.TERM_CHOICES)
+    term = models.CharField(max_length=10, choices=Score.TERM_CHOICES)
     attendance_days = models.PositiveIntegerField(default=0)
     vacation_date = models.DateField(null=True, blank=True)
     reopening_date = models.DateField(null=True, blank=True)
@@ -176,5 +176,5 @@ class ResultSummary(models.Model):
     
     locked = models.BooleanField(default=False)   # ✅ ADD THIS
 
-class Meta:
-    unique_together = ('student', 'term')
+    class Meta:
+        unique_together = ('student', 'term')
