@@ -278,8 +278,7 @@ def enter_scores(request):
             scores = list(scores)
 
             # calculate total
-            for s in scores:
-                s.total = s.class_score + s.exam_score
+            
 
             # sort properly
             scores.sort(key=lambda x: x.total, reverse=True)

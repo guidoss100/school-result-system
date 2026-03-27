@@ -26,6 +26,10 @@ class Student(models.Model):
 
     def __str__(self):
         return f"{self.first_name} {self.last_name} ({self.admission_number})"
+    
+    @property
+    def total(self):
+        return self.class_score + self.exam_score
 
     @property
     def overall_position(self):
