@@ -1,9 +1,7 @@
-
+{% extends "core/base.html" %}
 {% load static %}
 
-
-
-<link rel="stylesheet" href="{% static 'css/style.css' %}">
+{% load custom_filters %}
 <h2>Enter Student Scores
 
 </h2>
@@ -166,6 +164,17 @@ document.addEventListener("DOMContentLoaded", calculateTotals);
 
 </body>
 
+<style>
+.watermark{
+position:fixed;
+top:35%;
+left:40%;
+opacity:0.06;
+z-index:-1;
+width:350px;
+}
+</style>
+<img src="{% static 'images/CREST.png' %}" class="watermark">
 <footer style="text-align:center;margin-top:40px;color:gray;">
 
 <hr>
