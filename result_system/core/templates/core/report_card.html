@@ -1,23 +1,113 @@
-{% extends "base.html" %}
+
 {% load static %}
+<link rel="stylesheet" href="{% static 'css/style.css' %}">
+<!DOCTYPE html>
+<html>
+<head>
+<title>Report Card</title>
 
-{% block content %}
+<style>
 
-<div class="container">
+body{
+    font-family: Arial, sans-serif;
+    margin:40px;
+}
+
+.header{
+    text-align:center;
+}
+
+.school-name{
+    font-size:24px;
+    font-weight:bold;
+}
+
+.report-title{
+    font-size:18px;
+    margin-top:5px;
+}
+
+.student-info{
+    margin-top:30px;
+}
+
+.student-info p{
+    margin:4px 0;
+}
+
+table{
+    border-collapse:collapse;
+    width:100%;
+    margin-top:20px;
+}
+
+th, td{
+    border:1px solid black;
+    padding:8px;
+    text-align:center;
+}
+
+th{
+    background:#f0f0f0;
+}
+
+.summary{
+    margin-top:20px;
+}
+
+.footer{
+    margin-top:40px;
+    display:flex;
+    justify-content:space-between;
+}
+
+.signature{
+    text-align:center;
+}
+
+.print-btn{
+    margin-top:20px;
+}
+
+.watermark{
+    position:fixed;
+    top:5%;
+    left:2%;
+    opacity:0.08;
+    z-index:-1;
+}
+
+</style>
+
+
+</head>
+
+<body>
+
 
 <div class="header">
-    <div class="school-name">NEW GENERATION PREPARATORY SCHOOL</div>
-    <div class="report-title">PRIMARY / J.H.S DIVISION</div>
-    <div class="report-title">STUDENT PROGRESS REPORT</div>
+
+
+
+<div class="school-name">NEW GENERATION PREPARATORY SCHOOL</div>
+<div class="report-title">PRIMARY / J.H.S DIVISION</div>
+<div class="report-title">STUDENT PROGRESS REPORT</div>
+
 </div>
 
 <div class="student-info">
-    <p><b>Name:</b> {{ student.first_name }} {{ student.last_name }}</p>
-    <p><b>Admission No:</b> {{ student.admission_number }}</p>
-    <p><b>Class:</b> {{ student.school_class }}</p>
+
+<p><b>Name:</b> {{ student.first_name }} {{ student.last_name }}</p>
+
+<p><b>Admission No:</b> {{ student.admission_number }}</p>
+
+<p><b>Class:</b> {{ student.school_class }}</p>
+
 </div>
 
+
 <table>
+
 <tr>
 <th>Subject</th>
 <th>Class Score</th>
@@ -29,6 +119,7 @@
 </tr>
 
 {% for score in scores %}
+
 <tr>
 <td>{{ score.subject.name }}</td>
 <td>{{ score.class_score }}</td>
@@ -38,16 +129,47 @@
 <td>{{ score.position }}</td>
 <td>{{ score.remark }}</td>
 </tr>
+
 {% endfor %}
 
 </table>
 
+
 <div class="summary">
-    <p><b>Total Marks:</b> {{ total_marks }}</p>
-    <p><b>Position in Class:</b> {{ overall_position }}</p>
+
+<p><b>Total Marks:</b> {{ total_marks }}</p>
+
+<p><b>Position in Class:</b> {{ overall_position }}</p>
+
 </div>
 
+
 {% if summary %}
+
+<style>
+.summary-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 15px;
+    margin-top: 25px;
+}
+
+.summary-box {
+    border: 1px solid black;
+    padding: 12px;
+    min-height: 20px;
+}
+
+.summary-box.full {
+    grid-column: span 2;
+}
+
+.summary-title {
+    font-weight: bold;
+    margin-bottom: 5px;
+}
+</style>
+
 
 <h3 style="text-align:center; margin-top:30px;">TERM SUMMARY</h3>
 
@@ -87,6 +209,7 @@
 
 {% endif %}
 
+
 <div class="footer">
 
 <div class="signature">
@@ -101,10 +224,17 @@
 
 </div>
 
+
 <div class="print-btn">
 <button onclick="window.print()">Print Report Card</button>
 </div>
 
-</div>
+</body>
+<footer style="text-align:center;margin-top:40px;color:gray;">
 
-{% endblock %}
+<hr>
+
+<p>POWERED BY GUIDOSS MULTIMEDIA</p>
+
+</footer>
+</html>
