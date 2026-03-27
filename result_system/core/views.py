@@ -347,18 +347,30 @@ def report_card(request, student_id, term):
     total_marks = sum(score.total for score in scores)
     subject_count = scores.count()
 
-    # Calculate overall class position
-    class_students = Student.objects.filter(
-    school_class=student.school_class
+    from collections import defaultdict
+
+    # get all scores for this class + term
+    all_scores = Score.objects.filter(
+        term=term,
+        student__school_class=student.school_class
     )
 
+    # calculate total per student
+    student_totals = defaultdict(int)
 
-    rank = 1
-    for s in class_students:
-        if s.id == student.id:
-            overall_position = rank
-            break
-        rank += 1
+    for s in all_scores:
+        student_totals[s.student.id] += s.total
+
+    # sort students by total
+    sorted_students = sorted(student_totals.items(), key=lambda x: x[1], reverse=True)
+
+    # assign positions
+    positions = {}
+    for i, (student_id, total) in enumerate(sorted_students, start=1):
+        positions[student_id] = i
+
+    # get current student's position
+    overall_position = positions.get(student.id)
 
     summary = ResultSummary.objects.filter(
         student=student,

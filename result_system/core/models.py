@@ -29,24 +29,7 @@ class Student(models.Model):
     
     
 
-    @property
-    def overall_position(self):
-
-        students = Student.objects.filter(
-            school_class=self.school_class
-        )
-
-        ranked = sorted(
-            students,
-            key=lambda s: s.term_average,
-            reverse=True
-        )
-
-        position = 1
-        for s in ranked:
-            if s == self:
-                return position
-            position += 1
+    
 
 class Subject(models.Model):
     LEVEL_CHOICES = [
