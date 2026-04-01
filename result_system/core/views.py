@@ -490,16 +490,10 @@ def approved_results(request):
 
             student.scores = scores
 
-            summary = ResultSummary.objects.filter(
+            summary, created = ResultSummary.objects.get_or_create(
                 student=student,
                 term=selected_term
-            ).first()
-
-            if not summary:
-                summary = ResultSummary.objects.create(
-                    student=student,
-                    term=selected_term
-                )
+            )
 
             student.summary = summary
 
