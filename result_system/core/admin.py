@@ -108,6 +108,7 @@ class ResultSummaryAdmin(admin.ModelAdmin):
         "attendance_days",
         "vacation_date",
         "reopening_date",
+        "arrears",
         "next_term_bill",
     )
 
