@@ -333,53 +333,52 @@ def report_card(request, student_id, term):
     # GET STUDENTS LIST
     # =========================
     if class_mode:
-        students = Student.objects.filter(
+        students = list(Student.objects.filter(
             school_class=student.school_class
-        )
+        ))
     else:
-        students = [student]   # 🔥 KEY FIX
+        students = [student]
+
+    school_class = student.school_class
 
     # =========================
-    # PROCESS EACH STUDENT
+    # 🔥 LOAD ALL SCORES ONCE
+    # =========================
+    all_scores = Score.objects.filter(
+        term=term,
+        approved_by_admin1=True,
+        approved_by_admin2=True,
+        student__school_class=school_class,
+        student__isnull=False,
+        subject__isnull=False
+    ).select_related('student', 'subject')
+
+    # Group scores per student
+    student_scores = defaultdict(list)
+    student_totals = defaultdict(int)
+
+    for s in all_scores:
+        student_scores[s.student_id].append(s)
+        student_totals[s.student_id] += s.total
+
+    # Sort for positions
+    sorted_students = sorted(
+        student_totals.items(),
+        key=lambda x: x[1],
+        reverse=True
+    )
+
+    positions = {
+        student_id: i + 1
+        for i, (student_id, _) in enumerate(sorted_students)
+    }
+
+    # =========================
+    # ATTACH DATA TO STUDENTS
     # =========================
     for stu in students:
-
-        scores = Score.objects.filter(
-            student=stu,
-            term=term,
-            approved_by_admin1=True,
-            approved_by_admin2=True,
-            subject__isnull=False
-        ).select_related('subject')
-
-        stu.scores = scores
-        stu.total_marks = sum(s.total for s in scores)
-
-        # 🔥 POSITION CALCULATION
-        all_scores = Score.objects.filter(
-            term=term,
-            student__school_class=stu.school_class,
-            student__isnull=False
-        )
-
-        student_totals = defaultdict(int)
-
-        for s in all_scores:
-            if not s.student:
-                continue   # ✅ skip bad records
-            student_totals[s.student.id] += s.total
-
-        sorted_students = sorted(
-            student_totals.items(),
-            key=lambda x: x[1],
-            reverse=True
-        )
-
-        positions = {
-            student_id: i+1
-            for i, (student_id, _) in enumerate(sorted_students)
-        }
-
+        stu.scores = student_scores.get(stu.id, [])
+        stu.total_marks = student_totals.get(stu.id, 0)
         stu.overall_position = positions.get(stu.id)
 
         stu.summary = ResultSummary.objects.filter(
