@@ -444,100 +444,64 @@ def report_card_pdf(request, student_id, term):
 
     return response
 
-from django.shortcuts import render, redirect
-from django.contrib.auth.decorators import login_required
+
 
 @login_required
 def approved_results(request):
     try:
-            # ALL your existing code here
-            ...
-    except Exception as e:
-        return HttpResponse(f"ERROR: {str(e)}")
-    
-    teacher = Teacher.objects.filter(user=request.user).first()
+        teacher = Teacher.objects.filter(user=request.user).first()
 
-    if not teacher:
-        return render(request, "approved_results.html", {
-            "students": None,
-            "selected_term": None,
-            "teacher": None,
-            "error": "Teacher profile not found"
-        })
+        selected_term = request.GET.get("term", "").strip()
 
-    selected_term = request.GET.get("term", "").strip()
+        if selected_term not in ["1", "2", "3"]:
+            selected_term = None
 
-    if selected_term not in ["1", "2", "3"]:
-        selected_term = None
+        # HANDLE POST
+        if request.method == "POST":
+            student_id = request.POST.get("student_id")
+            term = request.POST.get("term", "").strip()
 
-    # ======================
-    # HANDLE POST
-    # ======================
-    if request.method == "POST":
-        student_id = request.POST.get("student_id")
-        term = request.POST.get("term", "").strip()
-
-        if term not in ["1", "2", "3"]:
-            return redirect(request.path)
-
-        try:
             student = Student.objects.get(id=student_id)
-        except Student.DoesNotExist:
-            return redirect(request.path)
-
-        summary, created = ResultSummary.objects.get_or_create(
-            student=student,
-            term=term
-        )
-
-        # prevent editing if locked
-        if summary.locked:
-            return redirect(request.path)
-
-        summary.attendance_days = int(request.POST.get("attendance") or 0)
-        summary.class_teacher_remark = request.POST.get("remark", "")
-        summary.locked = True
-        summary.save()
-
-        return redirect(f"{request.path}?term={term}")
-
-    # ======================
-    # HANDLE GET
-    # ======================
-    students = None
-
-    if teacher.class_teacher_of and selected_term:
-        students = Student.objects.filter(
-            school_class=teacher.class_teacher_of
-        )
-
-        result_students = []
-
-        for student in students:
-            scores = Score.objects.filter(
-                student=student,
-                term=selected_term,
-                approved_by_admin1=True,
-                approved_by_admin2=True
-            )
-
-            if not scores.exists():
-                continue
 
             summary, created = ResultSummary.objects.get_or_create(
                 student=student,
-                term=selected_term
+                term=term
             )
 
-            student.scores = scores
-            student.summary = summary
+            summary.attendance_days = int(request.POST.get("attendance") or 0)
+            summary.class_teacher_remark = request.POST.get("remark", "")
+            summary.locked = True
+            summary.save()
 
-            result_students.append(student)
+            return HttpResponse("POST WORKED")
 
-        students = result_students
+        # HANDLE GET
+        students = []
 
-    return render(request, "approved_results.html", {
-        "students": students,
-        "selected_term": selected_term,
-        "teacher": teacher
-    })
+        if teacher and teacher.class_teacher_of and selected_term:
+            all_students = Student.objects.filter(
+                school_class=teacher.class_teacher_of
+            )
+
+            for student in all_students:
+                scores = Score.objects.filter(
+                    student=student,
+                    term=selected_term,
+                    approved_by_admin1=True,
+                    approved_by_admin2=True
+                )
+
+                summary, created = ResultSummary.objects.get_or_create(
+                    student=student,
+                    term=selected_term
+                )
+
+                student.scores = scores
+                student.summary = summary
+
+                students.append(student)
+
+        return HttpResponse("GET WORKED")
+
+    except Exception as e:
+        return HttpResponse(f"🔥 REAL ERROR: {str(e)}")
