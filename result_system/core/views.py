@@ -360,6 +360,20 @@ def report_card(request, student_id, term):
     for s in all_scores:
         student_scores[s.student_id].append(s)
         student_totals[s.student_id] += s.total
+    
+    # 🔥 SUBJECT POSITION CALCULATION
+    subject_scores = defaultdict(list)
+
+    for s in all_scores:
+        subject_scores[s.subject_id].append(s)
+
+    subject_positions = {}
+
+    for subject_id, scores_list in subject_scores.items():
+        sorted_scores = sorted(scores_list, key=lambda x: x.total, reverse=True)
+
+        for i, s in enumerate(sorted_scores, start=1):
+            subject_positions[(s.student_id, subject_id)] = i
 
     # Sort for positions
     sorted_students = sorted(
@@ -380,6 +394,10 @@ def report_card(request, student_id, term):
         stu.scores = student_scores.get(stu.id, [])
         stu.total_marks = student_totals.get(stu.id, 0)
         stu.overall_position = positions.get(stu.id)
+
+        # ✅ Attach subject position
+        for sc in stu.scores:
+            sc.position = subject_positions.get((stu.id, sc.subject_id))
 
         stu.summary = ResultSummary.objects.filter(
             student=stu,
