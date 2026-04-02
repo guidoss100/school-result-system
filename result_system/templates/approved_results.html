@@ -30,12 +30,12 @@ Class: {{ teacher.class_teacher_of }}
                 <th>Grade</th>
             </tr>
 
-            {% if student.scores %}
+            {% if student.scores and student.scores|length > 0 %}
                 {% for score in student.scores %}
                 <tr>
                     <td>{{ score.subject.name }}</td>
-                    <td>{{ score.total }}</td>
-                    <td>{{ score.grade }}</td>
+                    <td>{{ score.total|default:0 }}</td>
+                    <td>{{ score.grade|default:"-" }}</td>
                 </tr>
                 {% endfor %}
             {% else %}
@@ -64,7 +64,7 @@ Class: {{ teacher.class_teacher_of }}
 
             <br><br>
 
-            {% if not student.summary.locked %}
+            {% if student.summary and not student.summary.locked %}
                 <button type="submit">Save</button>
             {% else %}
                 <p style="color:green;"><b>Already Submitted</b></p>
