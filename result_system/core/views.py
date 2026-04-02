@@ -348,7 +348,8 @@ def report_card(request, student_id, term):
             student=stu,
             term=term,
             approved_by_admin1=True,
-            approved_by_admin2=True
+            approved_by_admin2=True,
+            subject__isnull=False
         ).select_related('subject')
 
         stu.scores = scores
