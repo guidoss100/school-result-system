@@ -358,7 +358,7 @@ def report_card(request, student_id, term):
         # 🔥 POSITION CALCULATION
         all_scores = Score.objects.filter(
             term=term,
-            student__school_class=stu.school_class
+            student__school_class=stu.school_class,
             student__isnull=False
         )
 
