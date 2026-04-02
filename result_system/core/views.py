@@ -444,7 +444,12 @@ def report_card_pdf(request, student_id, term):
 
     return response
 
+from django.shortcuts import render, redirect
+from django.contrib.auth.decorators import login_required
 
+from django.http import HttpResponse
+
+from django.http import HttpResponse
 
 @login_required
 def approved_results(request):
@@ -501,7 +506,11 @@ def approved_results(request):
 
                 students.append(student)
 
-        return HttpResponse("GET WORKED")
+        return render(request, "approved_results.html", {
+            "students": students,
+            "selected_term": selected_term,
+            "teacher": teacher
+        })
 
     except Exception as e:
         return HttpResponse(f"🔥 REAL ERROR: {str(e)}")
