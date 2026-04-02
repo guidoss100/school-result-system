@@ -449,7 +449,12 @@ from django.contrib.auth.decorators import login_required
 
 @login_required
 def approved_results(request):
-
+    try:
+            # ALL your existing code here
+            ...
+    except Exception as e:
+        return HttpResponse(f"ERROR: {str(e)}")
+    
     teacher = Teacher.objects.filter(user=request.user).first()
 
     if not teacher:
