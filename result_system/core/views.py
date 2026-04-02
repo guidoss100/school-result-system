@@ -467,14 +467,14 @@ def approved_results(request):
             return redirect(request.path)
 
         # ✅ Allow editing ONLY if not locked
-        summary.attendance_days = request.POST.get("attendance")
+        summary.attendance_days = int(request.POST.get("attendance") or 0)
         summary.class_teacher_remark = request.POST.get("remark")
         summary.locked = True
         summary.save()
 
         return redirect(request.path)
 
-    # HANDLE GET
+    # Handle GET
     if teacher.class_teacher_of and selected_term:
         students = Student.objects.filter(
             school_class=teacher.class_teacher_of
@@ -488,11 +488,16 @@ def approved_results(request):
                 approved_by_admin2=True
             )
 
-            student.scores = scores if scores.exists() else []
+            student.scores = scores
 
+            # ✅ SAFE SUMMARY CREATION (NO CRASH)
             summary, created = ResultSummary.objects.get_or_create(
                 student=student,
-                term=selected_term
+                term=selected_term,
+                defaults={
+                    "attendance_days": 0,
+                    "class_teacher_remark": ""
+                }
             )
 
             student.summary = summary
