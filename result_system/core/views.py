@@ -359,11 +359,14 @@ def report_card(request, student_id, term):
         all_scores = Score.objects.filter(
             term=term,
             student__school_class=stu.school_class
+            student__isnull=False
         )
 
         student_totals = defaultdict(int)
 
         for s in all_scores:
+            if not s.student:
+                continue   # ✅ skip bad records
             student_totals[s.student.id] += s.total
 
         sorted_students = sorted(
