@@ -450,7 +450,7 @@ def approved_results(request):
     teacher = Teacher.objects.get(user=request.user)
 
     students = None
-    selected_term = request.GET.get("term")
+    selected_term = request.GET.get("term", "")[:1]
 
     # HANDLE POST
     if request.method == "POST":
