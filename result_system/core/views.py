@@ -318,38 +318,27 @@ def enter_scores(request):
 
 
 # STUDENT REPORT
-def student_report(request, student_id):
-    student = Student.objects.get(id=student_id)
-    scores = Score.objects.filter(student=student)
+def report_card(request, student_id, term):
 
-    total_marks = sum(score.total for score in scores)
-    subject_count = scores.count()
-    
-    context = {
-        'student': student,
-        'scores': scores,
-        'total_marks': total_marks,
-    }
+    # 🔒 ADMIN ONLY ACCESS
+    if not request.user.is_superuser:
+        return HttpResponse("Access Denied")
 
-    return render(request, 'student_report.html', context)
+    # Detect class mode (?class=1)
+    class_mode = request.GET.get("class") == "1"
 
-from collections import defaultdict
-from django.shortcuts import get_object_or_404, render
-
-def report_card(request, student_id=None, term=None):
-
-    # 👇 Detect class mode
-    class_mode = request.GET.get("class")
+    # Get base student
+    student = get_object_or_404(Student, id=student_id)
 
     # =========================
-    # ✅ CLASS REPORT MODE
+    # 🔵 CLASS REPORT MODE
     # =========================
     if class_mode:
 
-        teacher = Teacher.objects.get(user=request.user)
+        school_class = student.school_class
 
         students = Student.objects.filter(
-            school_class=teacher.class_teacher_of
+            school_class=school_class
         )
 
         for student in students:
@@ -363,24 +352,20 @@ def report_card(request, student_id=None, term=None):
             student.scores = scores
             student.total_marks = sum(s.total for s in scores)
 
-            summary = ResultSummary.objects.filter(
+            student.summary = ResultSummary.objects.filter(
                 student=student,
                 term=term
             ).first()
 
-            student.summary = summary
-
         return render(request, "core/report_card.html", {
             "students": students,
-            "term": term,
-            "class_mode": True
+            "class_mode": True,
+            "term": term
         })
 
     # =========================
-    # ✅ SINGLE STUDENT MODE (YOUR ORIGINAL CODE)
+    # 🟢 SINGLE STUDENT MODE
     # =========================
-
-    student = get_object_or_404(Student, id=student_id)
 
     scores = Score.objects.filter(
         student=student,
@@ -391,6 +376,7 @@ def report_card(request, student_id=None, term=None):
 
     total_marks = sum(score.total for score in scores)
 
+    # 🔥 POSITION CALCULATION
     all_scores = Score.objects.filter(
         term=term,
         student__school_class=student.school_class
@@ -401,11 +387,15 @@ def report_card(request, student_id=None, term=None):
     for s in all_scores:
         student_totals[s.student.id] += s.total
 
-    sorted_students = sorted(student_totals.items(), key=lambda x: x[1], reverse=True)
+    sorted_students = sorted(
+        student_totals.items(),
+        key=lambda x: x[1],
+        reverse=True
+    )
 
     positions = {}
-    for i, (sid, total) in enumerate(sorted_students, start=1):
-        positions[sid] = i
+    for i, (stu_id, total) in enumerate(sorted_students, start=1):
+        positions[stu_id] = i
 
     overall_position = positions.get(student.id)
 
@@ -414,19 +404,14 @@ def report_card(request, student_id=None, term=None):
         term=term
     ).first()
 
-    context = {
+    return render(request, "core/report_card.html", {
         "student": student,
         "scores": scores,
         "total_marks": total_marks,
         "summary": summary,
         "overall_position": overall_position,
         "class_mode": False
-    }
-
-    if term == "3":
-        promote_students()
-
-    return render(request, "core/report_card.html", context)
+    })
 
 @login_required
 def class_results(request, class_id, term):
