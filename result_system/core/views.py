@@ -447,18 +447,29 @@ def report_card_pdf(request, student_id, term):
 @login_required
 def approved_results(request):
 
-    teacher = Teacher.objects.get(user=request.user)
+    teacher = Teacher.objects.filter(user=request.user).first()
 
     students = None
-    selected_term = request.GET.get("term", "")[:1]
+    selected_term = request.GET.get("term", "").strip()
+
+    # Force valid values only
+    if selected_term not in ["1", "2", "3"]:
+        selected_term = None
 
     # HANDLE POST
     if request.method == "POST":
         student_id = request.POST.get("student_id")
-        term = request.POST.get("term")
+        term = request.POST.get("term", "").strip()
+
+        # Validate term
+        if term not in ["1", "2", "3"]:
+            return redirect(request.path)
+
+        # ✅ GET ACTUAL STUDENT OBJECT
+        student = Student.objects.get(id=student_id)
 
         summary, created = ResultSummary.objects.get_or_create(
-            student_id=student_id,
+            student=student,
             term=term
         )
 
@@ -466,7 +477,7 @@ def approved_results(request):
         if summary.locked:
             return redirect(request.path)
 
-        # ✅ Allow editing ONLY if not locked
+        # ✅ Save data
         summary.attendance_days = int(request.POST.get("attendance") or 0)
         summary.class_teacher_remark = request.POST.get("remark")
         summary.locked = True
