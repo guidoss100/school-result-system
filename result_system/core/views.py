@@ -494,7 +494,7 @@ def approved_results(request):
                     term=selected_term,
                     approved_by_admin1=True,
                     approved_by_admin2=True
-                )
+                ).select_related('subject')
 
                 summary, created = ResultSummary.objects.get_or_create(
                     student=student,
