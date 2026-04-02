@@ -333,7 +333,52 @@ def student_report(request, student_id):
 
     return render(request, 'student_report.html', context)
 
-def report_card(request, student_id, term):
+from collections import defaultdict
+from django.shortcuts import get_object_or_404, render
+
+def report_card(request, student_id=None, term=None):
+
+    # 👇 Detect class mode
+    class_mode = request.GET.get("class")
+
+    # =========================
+    # ✅ CLASS REPORT MODE
+    # =========================
+    if class_mode:
+
+        teacher = Teacher.objects.get(user=request.user)
+
+        students = Student.objects.filter(
+            school_class=teacher.class_teacher_of
+        )
+
+        for student in students:
+            scores = Score.objects.filter(
+                student=student,
+                term=term,
+                approved_by_admin1=True,
+                approved_by_admin2=True
+            ).select_related('subject')
+
+            student.scores = scores
+            student.total_marks = sum(s.total for s in scores)
+
+            summary = ResultSummary.objects.filter(
+                student=student,
+                term=term
+            ).first()
+
+            student.summary = summary
+
+        return render(request, "core/report_card.html", {
+            "students": students,
+            "term": term,
+            "class_mode": True
+        })
+
+    # =========================
+    # ✅ SINGLE STUDENT MODE (YOUR ORIGINAL CODE)
+    # =========================
 
     student = get_object_or_404(Student, id=student_id)
 
@@ -342,34 +387,26 @@ def report_card(request, student_id, term):
         term=term,
         approved_by_admin1=True,
         approved_by_admin2=True
-    )
+    ).select_related('subject')
 
     total_marks = sum(score.total for score in scores)
-    subject_count = scores.count()
 
-    from collections import defaultdict
-
-    # get all scores for this class + term
     all_scores = Score.objects.filter(
         term=term,
         student__school_class=student.school_class
     )
 
-    # calculate total per student
     student_totals = defaultdict(int)
 
     for s in all_scores:
         student_totals[s.student.id] += s.total
 
-    # sort students by total
     sorted_students = sorted(student_totals.items(), key=lambda x: x[1], reverse=True)
 
-    # assign positions
     positions = {}
-    for i, (student_id, total) in enumerate(sorted_students, start=1):
-        positions[student_id] = i
+    for i, (sid, total) in enumerate(sorted_students, start=1):
+        positions[sid] = i
 
-    # get current student's position
     overall_position = positions.get(student.id)
 
     summary = ResultSummary.objects.filter(
@@ -382,8 +419,10 @@ def report_card(request, student_id, term):
         "scores": scores,
         "total_marks": total_marks,
         "summary": summary,
-        "overall_position": overall_position
-}
+        "overall_position": overall_position,
+        "class_mode": False
+    }
+
     if term == "3":
         promote_students()
 
