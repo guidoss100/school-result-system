@@ -444,54 +444,69 @@ def report_card_pdf(request, student_id, term):
 
     return response
 
+from django.shortcuts import render, redirect
+from django.contrib.auth.decorators import login_required
+
 @login_required
 def approved_results(request):
 
     teacher = Teacher.objects.filter(user=request.user).first()
 
-    students = None
+    if not teacher:
+        return render(request, "approved_results.html", {
+            "students": None,
+            "selected_term": None,
+            "teacher": None,
+            "error": "Teacher profile not found"
+        })
+
     selected_term = request.GET.get("term", "").strip()
 
-    # Force valid values only
     if selected_term not in ["1", "2", "3"]:
         selected_term = None
 
+    # ======================
     # HANDLE POST
+    # ======================
     if request.method == "POST":
         student_id = request.POST.get("student_id")
         term = request.POST.get("term", "").strip()
 
-        # Validate term
         if term not in ["1", "2", "3"]:
             return redirect(request.path)
 
-        # ✅ GET ACTUAL STUDENT OBJECT
-        student = Student.objects.get(id=student_id)
+        try:
+            student = Student.objects.get(id=student_id)
+        except Student.DoesNotExist:
+            return redirect(request.path)
 
         summary, created = ResultSummary.objects.get_or_create(
             student=student,
             term=term
         )
 
-        # 🚫 DO NOT EDIT if already locked
+        # prevent editing if locked
         if summary.locked:
             return redirect(request.path)
 
-        # ✅ Save data
         summary.attendance_days = int(request.POST.get("attendance") or 0)
-        summary.class_teacher_remark = request.POST.get("remark")
+        summary.class_teacher_remark = request.POST.get("remark", "")
         summary.locked = True
         summary.save()
 
-        return redirect(request.path)
+        return redirect(f"{request.path}?term={term}")
 
-    # Handle GET
+    # ======================
+    # HANDLE GET
+    # ======================
+    students = None
+
     if teacher.class_teacher_of and selected_term:
         students = Student.objects.filter(
             school_class=teacher.class_teacher_of
         )
 
-        valid_students = []
+        result_students = []
 
         for student in students:
             scores = Score.objects.filter(
@@ -501,23 +516,21 @@ def approved_results(request):
                 approved_by_admin2=True
             )
 
-            # ✅ Skip students with no approved scores
             if not scores.exists():
                 continue
-
-            student.scores = scores
 
             summary, created = ResultSummary.objects.get_or_create(
                 student=student,
                 term=selected_term
             )
 
+            student.scores = scores
             student.summary = summary
 
-            valid_students.append(student)
+            result_students.append(student)
 
-        students = valid_students
-    # ✅ THIS MUST BE INSIDE FUNCTION
+        students = result_students
+
     return render(request, "approved_results.html", {
         "students": students,
         "selected_term": selected_term,
