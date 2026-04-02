@@ -488,7 +488,7 @@ def approved_results(request):
                 approved_by_admin2=True
             )
 
-            student.scores = scores
+            student.scores = scores if scores.exists() else []
 
             summary, created = ResultSummary.objects.get_or_create(
                 student=student,

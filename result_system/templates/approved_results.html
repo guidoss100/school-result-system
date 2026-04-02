@@ -4,73 +4,80 @@
 <h3 style="text-align:center;">
 Class: {{ teacher.class_teacher_of }}
 </h3>
-<h2>Approved Results</h2>
 
-<form method="get">
+<h2 style="text-align:center;">Approved Results</h2>
 
+<form method="get" style="text-align:center; margin-bottom:20px;">
+    <select name="term">
+        <option value="1" {% if selected_term == "1" %}selected{% endif %}>Term 1</option>
+        <option value="2" {% if selected_term == "2" %}selected{% endif %}>Term 2</option>
+        <option value="3" {% if selected_term == "3" %}selected{% endif %}>Term 3</option>
+    </select>
 
-
-<select name="term">
-<option value="1">Term 1</option>
-<option value="2">Term 2</option>
-<option value="3">Term 3</option>
-</select>
-
-<button type="submit">Load</button>
-
+    <button type="submit">Load</button>
 </form>
 
 {% if students %}
 
-{% for student in students %}
+    {% for student in students %}
 
-<h3>{{ student.first_name }} {{ student.last_name }}</h3>
+        <h3>{{ student.first_name }} {{ student.last_name }}</h3>
 
-<table border="1" width="100%">
-<tr>
-<th>Subject</th>
-<th>Total</th>
-<th>Grade</th>
-<th>Position</th>
-</tr>
+        <table border="1" width="100%">
+            <tr>
+                <th>Subject</th>
+                <th>Total</th>
+                <th>Grade</th>
+            </tr>
 
-{% for score in student.scores %}
-<tr>
-<td>{{ score.subject.name }}</td>
-<td>{{ score.total }}</td>
-<td>{{ score.grade }}</td>
-<td>{{ score.position }}</td>
-</tr>
-{% endfor %}
+            {% if student.scores %}
+                {% for score in student.scores %}
+                <tr>
+                    <td>{{ score.subject.name }}</td>
+                    <td>{{ score.total }}</td>
+                    <td>{{ score.grade }}</td>
+                </tr>
+                {% endfor %}
+            {% else %}
+                <tr>
+                    <td colspan="3">No approved scores</td>
+                </tr>
+            {% endif %}
+        </table>
 
-</table>
+        <br>
 
-<br>
+        <form method="post">
+            {% csrf_token %}
 
-<form method="post">
-{% csrf_token %}
+            <input type="hidden" name="student_id" value="{{ student.id }}">
+            <input type="hidden" name="term" value="{{ selected_term }}">
 
-<input type="hidden" name="student_id" value="{{ student.id }}">
-<input type="hidden" name="term" value="{{ selected_term }}">
+            <label>Attendance</label>
+            <input type="number" name="attendance"
+                   value="{{ student.summary.attendance_days|default:0 }}">
 
-<label>Attendance</label>
-<input type="number" name="attendance" value="{{ student.summary.attendance_days }}">
+            <br><br>
 
-<br>
+            <label>Class Teacher Remark</label>
+            <textarea name="remark">{{ student.summary.class_teacher_remark|default:"" }}</textarea>
 
-<label>Class Teacher Remark</label>
-<textarea name="remark">{{ student.summary.class_teacher_remark }}</textarea>
+            <br><br>
 
-<br>
+            {% if not student.summary.locked %}
+                <button type="submit">Save</button>
+            {% else %}
+                <p style="color:green;"><b>Already Submitted</b></p>
+            {% endif %}
 
-<button type="submit">Save</button>
+        </form>
 
-</form>
+        <hr>
 
-<hr>
+    {% endfor %}
 
-{% endfor %}
-
+{% else %}
+    <p style="text-align:center;">No students found for this class.</p>
 {% endif %}
 
 {% endblock %}
