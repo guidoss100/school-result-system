@@ -1,98 +1,247 @@
+{% load static %}
+
+
+
+<link rel="stylesheet" href="{% static 'css/style.css' %}">
+<!DOCTYPE html>
+<html>
+<head>
+<title>Report Card</title>
+
+<style>
+
+body{
+    font-family: Arial, sans-serif;
+    margin:40px;
+}
+
+.header{
+    text-align:center;
+}
+
+.school-name{
+    font-size:24px;
+    font-weight:bold;
+}
+
+.report-title{
+    font-size:18px;
+    margin-top:5px;
+}
+
+.student-info{
+    margin-top:30px;
+}
+
+.student-info p{
+    margin:4px 0;
+}
+
+table{
+    border-collapse:collapse;
+    width:100%;
+    margin-top:20px;
+}
+
+th, td{
+    border:1px solid black;
+    padding:8px;
+    text-align:center;
+}
+
+th{
+    background:#f0f0f0;
+}
+
+.summary{
+    margin-top:20px;
+}
+
+.footer{
+    margin-top:40px;
+    display:flex;
+    justify-content:space-between;
+}
+
+.signature{
+    text-align:center;
+}
+
+.print-btn{
+    margin-top:20px;
+}
+
+.watermark{
+    position:fixed;
+    top:5%;
+    left:2%;
+    opacity:0.08;
+    z-index:-1;
+}
+
+</style>
+
+
+</head>
+
 <body>
 
-{% if class_mode %}
 
-    <!-- 🔥 FULL CLASS REPORT -->
+<div class="header">
 
-    {% for student in students %}
 
-    <div class="header">
-        <div class="school-name">NEW GENERATION PREPARATORY SCHOOL</div>
-        <div class="report-title">PRIMARY / J.H.S DIVISION</div>
-        <div class="report-title">STUDENT PROGRESS REPORT</div>
-    </div>
 
-    <div class="student-info">
-        <p><b>Name:</b> {{ student.first_name }} {{ student.last_name }}</p>
-        <p><b>Admission No:</b> {{ student.admission_number }}</p>
-        <p><b>Class:</b> {{ student.school_class }}</p>
-    </div>
+<div class="school-name">NEW GENERATION PREPARATORY SCHOOL</div>
+<div class="report-title">PRIMARY / J.H.S DIVISION</div>
+<div class="report-title">STUDENT PROGRESS REPORT</div>
 
-    <table>
-    <tr>
-        <th>Subject</th>
-        <th>Class Score</th>
-        <th>Exam Score</th>
-        <th>Total</th>
-        <th>Grade</th>
-        <th>Remark</th>
-    </tr>
+</div>
 
-    {% for score in student.scores %}
-    <tr>
-        <td>{{ score.subject.name }}</td>
-        <td>{{ score.class_score }}</td>
-        <td>{{ score.exam_score }}</td>
-        <td>{{ score.total }}</td>
-        <td>{{ score.grade }}</td>
-        <td>{{ score.remark }}</td>
-    </tr>
-    {% endfor %}
+<div class="student-info">
 
-    </table>
+<p><b>Name:</b> {{ student.first_name }} {{ student.last_name }}</p>
 
-    <div class="summary">
-        <p><b>Total Marks:</b> {{ student.total_marks }}</p>
-    </div>
+<p><b>Admission No:</b> {{ student.admission_number }}</p>
 
-    {% if student.summary %}
-    <div class="summary-grid">
+<p><b>Class:</b> {{ student.school_class }}</p>
 
-        <div class="summary-box">
-            <div class="summary-title">Attendance</div>
-            {{ student.summary.attendance_days|default:"-" }}
-        </div>
+</div>
 
-        <div class="summary-box">
-            <div class="summary-title">Arrears</div>
-            {{ student.summary.arrears|default:"0" }}
-        </div>
 
-        <div class="summary-box">
-            <div class="summary-title">Next Term Bill</div>
-            {{ student.summary.next_term_bill|default:"0" }}
-        </div>
+<table>
 
-        <div class="summary-box full">
-            <div class="summary-title">Class Teacher Remark</div>
-            {{ student.summary.class_teacher_remark|default:"" }}
-        </div>
+<tr>
+<th>Subject</th>
+<th>Class Score</th>
+<th>Exam Score</th>
+<th>Total</th>
+<th>Grade</th>
+<th>Position</th>
+<th>Remark</th>
+</tr>
 
-    </div>
-    {% endif %}
+{% for score in scores %}
 
-    <hr style="margin:40px 0; page-break-after: always;">
+<tr>
+<td>{{ score.subject.name }}</td>
+<td>{{ score.class_score }}</td>
+<td>{{ score.exam_score }}</td>
+<td>{{ score.total }}</td>
+<td>{{ score.grade }}</td>
+<td>{{ score.position }}</td>
+<td>{{ score.remark }}</td>
+</tr>
 
-    {% endfor %}
+{% endfor %}
 
-{% else %}
+</table>
 
-    <!-- ✅ YOUR ORIGINAL DESIGN (UNCHANGED) -->
 
-    <div class="header">
-        <div class="school-name">NEW GENERATION PREPARATORY SCHOOL</div>
-        <div class="report-title">PRIMARY / J.H.S DIVISION</div>
-        <div class="report-title">STUDENT PROGRESS REPORT</div>
-    </div>
+<div class="summary">
 
-    <div class="student-info">
-        <p><b>Name:</b> {{ student.first_name }} {{ student.last_name }}</p>
-        <p><b>Admission No:</b> {{ student.admission_number }}</p>
-        <p><b>Class:</b> {{ student.school_class }}</p>
-    </div>
+<p><b>Total Marks:</b> {{ total_marks }}</p>
 
-    <!-- KEEP EVERYTHING ELSE EXACTLY AS YOU HAD -->
+<p><b>Position in Class:</b> {{ overall_position }}</p>
+
+</div>
+
+
+{% if summary %}
+
+<style>
+.summary-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 15px;
+    margin-top: 25px;
+}
+
+.summary-box {
+    border: 1px solid black;
+    padding: 12px;
+    min-height: 20px;
+}
+
+.summary-box.full {
+    grid-column: span 2;
+}
+
+.summary-title {
+    font-weight: bold;
+    margin-bottom: 5px;
+}
+</style>
+
+
+<h3 style="text-align:center; margin-top:30px;">TERM SUMMARY</h3>
+
+<div class="summary-grid">
+
+<div class="summary-box">
+<div class="summary-title">Attendance</div>
+{{ summary.attendance_days }}
+</div>
+
+<div class="summary-box">
+<div class="summary-title">Arrears</div>
+{{ summary.arrears }}
+</div>
+
+<div class="summary-box">
+<div class="summary-title">Next Term Bill</div>
+{{ summary.next_term_bill }}
+</div>
+
+<div class="summary-box">
+<div class="summary-title">Vacation Date</div>
+{{ summary.vacation_date }}
+</div>
+
+<div class="summary-box">
+<div class="summary-title">Reopening Date</div>
+{{ summary.reopening_date }}
+</div>
+
+<div class="summary-box full">
+<div class="summary-title">Class Teacher Remark</div>
+{{ summary.class_teacher_remark }}
+</div>
+
+<div class="summary-box full">
+<div class="summary-title">Headmaster Remark</div>
+{{ summary.headmaster_remark }}
+</div>
+
+</div>
 
 {% endif %}
 
+
+<div class="footer">
+
+<div class="signature">
+<p>________________________</p>
+<p>Class Teacher</p>
+</div>
+
+<div class="signature">
+<p>________________________</p>
+<p>Headmaster</p>
+</div>
+
+</div>
+
+
+<div class="print-btn">
+<button onclick="window.print()">Print Report Card</button>
+</div>
+
 </body>
+<footer style="text-align:center;margin-top:40px;color:gray;">
+
+<hr>
+
+<p>POWERED BY GUIDOSS MULTIMEDIA</p>
+
+</footer>
+</html>
