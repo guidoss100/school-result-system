@@ -138,6 +138,7 @@ class ResultSummary(models.Model):
     reopening_date = models.DateField(null=True, blank=True)
     class_teacher_remark = models.TextField(blank=True)
     headmaster_remark = models.TextField(blank=True)
+    arrears = models.DecimalField(max_digits=8, decimal_places=2, default=0.0)
     next_term_bill = models.DecimalField(max_digits=8, decimal_places=2, default=0.0)
     created_by = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True)
     total_marks = models.IntegerField(default=0)
