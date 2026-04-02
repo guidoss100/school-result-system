@@ -62,6 +62,8 @@ th{
 
 {% if class_mode %}
     {% for student in students %}
+{% else %}
+    {% with student=student %}
 {% endif %}
 
 <div class="header">
@@ -132,7 +134,9 @@ th{
 <hr style="margin:40px 0;">
 
 {% if class_mode %}
-    {% endfor %}
+    {% for student in students %}
+{% else %}
+    {% with student=student %}
 {% endif %}
 
 <div class="print-btn">
