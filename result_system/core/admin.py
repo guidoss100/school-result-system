@@ -25,7 +25,7 @@ class StudentAdmin(ReadOnlyAdmin):
 
     def report_link(self, obj):
         return format_html(
-            '<a href="/report/{}/1/" target="_blank">Open Report</a>',
+            '<a href="/report/{}/1/?class=1" target="_blank">Open Report</a>',
             obj.id
         )
 
@@ -110,6 +110,11 @@ class ResultSummaryAdmin(admin.ModelAdmin):
         "reopening_date",
         "arrears",
         "next_term_bill",
+    )
+
+    list_filter = (
+        "term",
+        "student__school_class"
     )
 
     def get_readonly_fields(self, request, obj=None):
