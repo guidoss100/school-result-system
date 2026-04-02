@@ -480,6 +480,8 @@ def approved_results(request):
             school_class=teacher.class_teacher_of
         )
 
+        valid_students = []
+
         for student in students:
             scores = Score.objects.filter(
                 student=student,
@@ -488,20 +490,22 @@ def approved_results(request):
                 approved_by_admin2=True
             )
 
+            # ✅ Skip students with no approved scores
+            if not scores.exists():
+                continue
+
             student.scores = scores
 
-            # ✅ SAFE SUMMARY CREATION (NO CRASH)
             summary, created = ResultSummary.objects.get_or_create(
                 student=student,
-                term=selected_term,
-                defaults={
-                    "attendance_days": 0,
-                    "class_teacher_remark": ""
-                }
+                term=selected_term
             )
 
             student.summary = summary
 
+            valid_students.append(student)
+
+        students = valid_students
     # ✅ THIS MUST BE INSIDE FUNCTION
     return render(request, "approved_results.html", {
         "students": students,
