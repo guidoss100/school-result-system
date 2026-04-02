@@ -60,9 +60,7 @@ th{
 
 <body>
 
-{% if class_mode %}
-    {% for student in students %}
-{% endif %}
+{% for student in students %}
 
 <div class="header">
     <div class="school-name">NEW GENERATION PREPARATORY SCHOOL</div>
@@ -102,12 +100,13 @@ th{
 
 <div class="summary">
     <p><b>Total Marks:</b> {{ student.total_marks }}</p>
+    <p><b>Position in Class:</b> {{ student.overall_position }}</p>
 </div>
 
 {% if student.summary %}
+
 <h3 style="text-align:center; margin-top:30px;">TERM SUMMARY</h3>
 
-<div>
 <p><b>Attendance:</b> {{ student.summary.attendance_days }}</p>
 <p><b>Arrears:</b> {{ student.summary.arrears }}</p>
 <p><b>Next Term Bill:</b> {{ student.summary.next_term_bill }}</p>
@@ -115,7 +114,7 @@ th{
 <p><b>Reopening Date:</b> {{ student.summary.reopening_date }}</p>
 <p><b>Class Teacher Remark:</b> {{ student.summary.class_teacher_remark }}</p>
 <p><b>Headmaster Remark:</b> {{ student.summary.headmaster_remark }}</p>
-</div>
+
 {% endif %}
 
 <div class="footer">
@@ -123,20 +122,20 @@ th{
         <p>________________________</p>
         <p>Class Teacher</p>
     </div>
+
     <div class="signature">
         <p>________________________</p>
         <p>Headmaster</p>
     </div>
 </div>
 
-<hr style="margin:40px 0;">
+<!-- 🔥 PAGE BREAK -->
+<div style="page-break-after: always;"></div>
 
-{% if class_mode %}
-    {% endfor %}
-{% endif %}
+{% endfor %}
 
 <div class="print-btn">
-<button onclick="window.print()">Print Report Card</button>
+    <button onclick="window.print()">Print Report Card</button>
 </div>
 
 </body>

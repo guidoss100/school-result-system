@@ -8,6 +8,7 @@ from .forms import TeacherSignupForm
 from .models import Student, Score, ResultSummary
 from django.contrib.auth.decorators import login_required
 from django.http import HttpResponse
+from collections import defaultdict
 from django.template.loader import render_to_string
 
 
@@ -320,97 +321,73 @@ def enter_scores(request):
 # STUDENT REPORT
 def report_card(request, student_id, term):
 
-    # 🔒 ADMIN ONLY ACCESS
+    # 🔒 ADMIN ONLY
     if not request.user.is_superuser:
         return HttpResponse("Access Denied")
 
-    # Detect class mode (?class=1)
     class_mode = request.GET.get("class") == "1"
 
-    # Get base student
     student = get_object_or_404(Student, id=student_id)
 
     # =========================
-    # 🔵 CLASS REPORT MODE
+    # GET STUDENTS LIST
     # =========================
     if class_mode:
-
-        school_class = student.school_class
-
         students = Student.objects.filter(
-            school_class=school_class
+            school_class=student.school_class
+        )
+    else:
+        students = [student]   # 🔥 KEY FIX
+
+    # =========================
+    # PROCESS EACH STUDENT
+    # =========================
+    for stu in students:
+
+        scores = Score.objects.filter(
+            student=stu,
+            term=term,
+            approved_by_admin1=True,
+            approved_by_admin2=True
+        ).select_related('subject')
+
+        stu.scores = scores
+        stu.total_marks = sum(s.total for s in scores)
+
+        # 🔥 POSITION CALCULATION
+        all_scores = Score.objects.filter(
+            term=term,
+            student__school_class=stu.school_class
         )
 
-        for student in students:
-            scores = Score.objects.filter(
-                student=student,
-                term=term,
-                approved_by_admin1=True,
-                approved_by_admin2=True
-            ).select_related('subject')
+        student_totals = defaultdict(int)
 
-            student.scores = scores
-            student.total_marks = sum(s.total for s in scores)
+        for s in all_scores:
+            student_totals[s.student.id] += s.total
 
-            student.summary = ResultSummary.objects.filter(
-                student=student,
-                term=term
-            ).first()
+        sorted_students = sorted(
+            student_totals.items(),
+            key=lambda x: x[1],
+            reverse=True
+        )
 
-        return render(request, "core/report_card.html", {
-            "students": students,
-            "class_mode": True,
-            "term": term
-        })
+        positions = {
+            student_id: i+1
+            for i, (student_id, _) in enumerate(sorted_students)
+        }
+
+        stu.overall_position = positions.get(stu.id)
+
+        stu.summary = ResultSummary.objects.filter(
+            student=stu,
+            term=term
+        ).first()
 
     # =========================
-    # 🟢 SINGLE STUDENT MODE
+    # FINAL RENDER
     # =========================
-
-    scores = Score.objects.filter(
-        student=student,
-        term=term,
-        approved_by_admin1=True,
-        approved_by_admin2=True
-    ).select_related('subject')
-
-    total_marks = sum(score.total for score in scores)
-
-    # 🔥 POSITION CALCULATION
-    all_scores = Score.objects.filter(
-        term=term,
-        student__school_class=student.school_class
-    )
-
-    student_totals = defaultdict(int)
-
-    for s in all_scores:
-        student_totals[s.student.id] += s.total
-
-    sorted_students = sorted(
-        student_totals.items(),
-        key=lambda x: x[1],
-        reverse=True
-    )
-
-    positions = {}
-    for i, (stu_id, total) in enumerate(sorted_students, start=1):
-        positions[stu_id] = i
-
-    overall_position = positions.get(student.id)
-
-    summary = ResultSummary.objects.filter(
-        student=student,
-        term=term
-    ).first()
-
     return render(request, "core/report_card.html", {
-        "student": student,
-        "scores": scores,
-        "total_marks": total_marks,
-        "summary": summary,
-        "overall_position": overall_position,
-        "class_mode": False
+        "students": students
     })
 
 @login_required
