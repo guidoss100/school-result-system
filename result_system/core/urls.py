@@ -31,4 +31,11 @@ urlpatterns = [
 
     # Result Slip
     path("result-slip/<int:student_id>/", views.result_slip, name="result_slip"),
+
+    path(
+        "promote-students/",
+        views.promote_students,
+        name="promote_students",
+    ),
+
 ]

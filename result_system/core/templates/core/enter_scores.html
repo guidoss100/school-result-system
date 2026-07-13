@@ -113,7 +113,7 @@ input[type=number]{
 
 <h2>ENTER STUDENT SCORES</h2>
 
-<form method="POST">
+<form method="GET">
 
 {% csrf_token %}
 
@@ -162,6 +162,7 @@ input[type=number]{
 <button type="submit" name="load_students">
 Load Students
 </button>
+</form>
 
 </div>
 
@@ -180,6 +181,14 @@ Teachers can enter only Class Scores.
 
 {% if students %}
 
+<form method="POST">
+
+{% csrf_token %}
+
+<input type="hidden" name="class_id" value="{{ selected_class }}">
+<input type="hidden" name="subject_id" value="{{ selected_subject }}">
+<input type="hidden" name="term" value="{{ selected_term }}">
+
 <table>
 
 <tr>
@@ -190,6 +199,7 @@ Teachers can enter only Class Scores.
 
 {% if exam_entry_open %}
 <th>Exam Score (50)</th>
+
 {% endif %}
 
 <th>Total</th>

@@ -117,6 +117,16 @@ th{
 
 {% endif %}
 
+<hr>
+
+<h3 style="text-align:center;">PROMOTION STATUS</h3>
+
+<p><strong>Status:</strong> {{ student.promotion_status }}</p>
+
+{% if student.next_class != "-" %}
+<p><strong>Promoted To:</strong> {{ student.next_class }}</p>
+{% endif %}
+
 <div class="footer">
     <div class="signature">
         <p>________________________</p>

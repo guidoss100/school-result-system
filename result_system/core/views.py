@@ -1,6 +1,7 @@
 from django.shortcuts import render, get_object_or_404, redirect
 from django.contrib.auth.models import User
 from django.contrib import messages
+from django.contrib.admin.views.decorators import staff_member_required
 from django.shortcuts import render, redirect
 from django.contrib.auth import authenticate, login
 from .models import Student, SchoolClass, Score, Subject, Teacher
@@ -18,9 +19,11 @@ def home(request):
 
 
 
-def promote_students():
-    
-    students = Student.objects.all()
+from django.contrib import messages
+from django.contrib.admin.views.decorators import staff_member_required
+
+@staff_member_required
+def promote_students(request):
 
     promotion_map = {
         "Primary 1": "Primary 2",
@@ -28,10 +31,14 @@ def promote_students():
         "Primary 3": "Primary 4",
         "Primary 4": "Primary 5",
         "Primary 5": "Primary 6",
-        "Primary 6": "JHS 1",
-        "JHS 1": "JHS 2",
-        "JHS 2": "JHS 3"
+        "Primary 6": "J.H.S 1",
+        "J.H.S 1": "J.H.S 2",
+        "J.H.S 2": "J.H.S 3",
     }
+
+    promoted = 0
+
+    students = Student.objects.select_related("school_class")
 
     for student in students:
 
@@ -39,12 +46,21 @@ def promote_students():
 
         if current_class in promotion_map:
 
-            new_class_name = promotion_map[current_class]
+            next_class = SchoolClass.objects.get(
+                name=promotion_map[current_class]
+            )
 
-            new_class = SchoolClass.objects.get(name=new_class_name)
-
-            student.school_class = new_class
+            student.school_class = next_class
             student.save()
+
+            promoted += 1
+
+    messages.success(
+        request,
+        f"{promoted} students have been promoted successfully."
+    )
+
+    return redirect("/admin/")
 
 
 @login_required
@@ -163,40 +179,59 @@ def create_scores_for_student(student, term="Term 1"):
 @login_required
 def enter_scores(request):
     teacher = Teacher.objects.filter(user=request.user).first()
-    settings, created = ResultSettings.objects.get_or_create(id=1)
 
     if not teacher:
         return redirect("teacher-login")
+
+    settings, created = ResultSettings.objects.get_or_create(id=1)
 
     classes = SchoolClass.objects.filter(level=teacher.level)
     subjects = teacher.subjects.all()
 
     students = None
+    existing_scores = {}
+
+    # -------------------------
+    # GET VALUES
+    # -------------------------
     selected_class = request.GET.get("class_id")
     selected_subject = request.GET.get("subject_id")
     selected_term = request.GET.get("term")
+    print("METHOD:", request.method)
+    print("CLASS:", selected_class)
+    print("SUBJECT:", selected_subject)
+    print("TERM:", selected_term)
 
-    existing_scores = {}
+    # -------------------------
+    # LOAD STUDENTS
+    # -------------------------
+    if selected_class and selected_subject and selected_term:
 
-    # Load students from GET
-    if selected_class:
         students = Student.objects.filter(
             school_class_id=selected_class
         )
 
-        if selected_subject and selected_term:
-            scores = Score.objects.filter(
-                subject_id=selected_subject,
-                term=selected_term,
-                student__school_class_id=selected_class
-            )
+        scores = Score.objects.filter(
+            subject_id=selected_subject,
+            term=selected_term,
+            student__school_class_id=selected_class
+        )
 
-            existing_scores = {
-                s.student.id: s for s in scores
-            }
+        scores = list(scores)
 
-    # Save scores
-    if request.method == "POST" and "save_scores" in request.POST:
+        scores.sort(key=lambda x: x.total, reverse=True)
+
+        for i, score in enumerate(scores, start=1):
+            score.position = i
+
+        existing_scores = {
+            s.student.id: s for s in scores
+        }
+
+    # -------------------------
+    # SAVE SCORES
+    # -------------------------
+    if request.method == "POST":
 
         selected_class = request.POST.get("class_id")
         selected_subject = request.POST.get("subject_id")
@@ -213,64 +248,37 @@ def enter_scores(request):
 
         for student in students:
 
-            existing = Score.objects.filter(
-                student=student,
-                subject=subject,
-                term=selected_term
-            ).first()
-
-            if existing and existing.approved_by_admin1 and existing.approved_by_admin2:
-                continue
-
-            class_score = request.POST.get(f"class_{student.id}")
-
-            if class_score == "":
-                class_score = existing.class_score if existing else 0
-
-            existing = Score.objects.filter(
-                student=student,
-                subject=subject,
-                term=selected_term
-            ).first()
-
-            class_score = request.POST.get(f"class_{student.id}")
-
-            if settings.exam_entry_open:
-                exam_score = request.POST.get(f"exam_{student.id}")
-            else:
-                exam_score = existing.exam_score if existing else 0
-
-            Score.objects.update_or_create(
+            score, created = Score.objects.get_or_create(
                 student=student,
                 subject=subject,
                 term=selected_term,
                 defaults={
-                    "class_score": int(class_score),
-                    "exam_score": int(exam_score),
+                    "class_score": 0,
+                    "exam_score": 0
                 }
             )
 
-        scores = Score.objects.filter(
-            subject=subject,
-            term=selected_term,
-            student__school_class_id=selected_class
+            # Don't allow editing after approval
+            if score.approved_by_admin1 and score.approved_by_admin2:
+                continue
+
+            class_score = request.POST.get(f"class_{student.id}")
+
+            if class_score != "":
+                score.class_score = int(class_score)
+
+            if settings.exam_entry_open:
+                exam_score = request.POST.get(f"exam_{student.id}")
+
+                if exam_score != "":
+                    score.exam_score = int(exam_score)
+
+            score.save()
+
+        return redirect(
+            f"/enter-scores/?class_id={selected_class}&subject_id={selected_subject}&term={selected_term}"
         )
-
-        scores = list(scores)
-
-        scores.sort(
-            key=lambda x: x.total,
-            reverse=True
-        )
-
-        for i, s in enumerate(scores, start=1):
-            s.position = i
-            s.save()
-
-        existing_scores = {
-            s.student.id: s for s in scores
-        }
-
+    print("Exam Entry Open =", settings.exam_entry_open)
     return render(request, "core/enter_scores.html", {
         "classes": classes,
         "subjects": subjects,
@@ -307,7 +315,7 @@ def report_card(request, student_id, term):
     school_class = student.school_class
 
     # =========================
-    # 🔥 LOAD ALL SCORES ONCE
+    # LOAD ALL SCORES
     # =========================
     all_scores = Score.objects.filter(
         term=term,
@@ -316,17 +324,18 @@ def report_card(request, student_id, term):
         student__school_class=school_class,
         student__isnull=False,
         subject__isnull=False
-    ).select_related('student', 'subject')
+    ).select_related("student", "subject")
 
-    # Group scores per student
     student_scores = defaultdict(list)
     student_totals = defaultdict(int)
 
     for s in all_scores:
         student_scores[s.student_id].append(s)
         student_totals[s.student_id] += s.total
-    
-    # 🔥 SUBJECT POSITION CALCULATION
+
+    # =========================
+    # SUBJECT POSITIONS
+    # =========================
     subject_scores = defaultdict(list)
 
     for s in all_scores:
@@ -335,12 +344,19 @@ def report_card(request, student_id, term):
     subject_positions = {}
 
     for subject_id, scores_list in subject_scores.items():
-        sorted_scores = sorted(scores_list, key=lambda x: x.total, reverse=True)
+
+        sorted_scores = sorted(
+            scores_list,
+            key=lambda x: x.total,
+            reverse=True
+        )
 
         for i, s in enumerate(sorted_scores, start=1):
-            subject_positions[(s.student_id, subject_id)] = i
+            subject_positions[(s.student_id, s.subject_id)] = i
 
-    # Sort for positions
+    # =========================
+    # CLASS POSITIONS
+    # =========================
     sorted_students = sorted(
         student_totals.items(),
         key=lambda x: x[1],
@@ -353,24 +369,49 @@ def report_card(request, student_id, term):
     }
 
     # =========================
-    # ATTACH DATA TO STUDENTS
+    # PROMOTION MAP
+    # =========================
+    promotion_map = {
+        "Primary 1": "Primary 2",
+        "Primary 2": "Primary 3",
+        "Primary 3": "Primary 4",
+        "Primary 4": "Primary 5",
+        "Primary 5": "Primary 6",
+        "Primary 6": "J.H.S 1",
+        "J.H.S 1": "J.H.S 2",
+        "J.H.S 2": "J.H.S 3",
+    }
+
+    # =========================
+    # ATTACH DATA
     # =========================
     for stu in students:
+
         stu.scores = student_scores.get(stu.id, [])
         stu.total_marks = student_totals.get(stu.id, 0)
         stu.overall_position = positions.get(stu.id)
 
-        # ✅ Attach subject position
         for sc in stu.scores:
-            sc.position = subject_positions.get((stu.id, sc.subject_id))
+            sc.position = subject_positions.get(
+                (stu.id, sc.subject_id)
+            )
 
         stu.summary = ResultSummary.objects.filter(
             student=stu,
             term=term
         ).first()
 
+        current_class = stu.school_class.name
+
+        if current_class == "J.H.S 3":
+            stu.promotion_status = "COMPLETED J.H.S"
+            stu.next_class = "-"
+        else:
+            stu.promotion_status = "PROMOTED"
+            stu.next_class = promotion_map.get(current_class, "-")
+
     # =========================
-    # FINAL RENDER
+    # RENDER
     # =========================
     return render(request, "core/report_card.html", {
         "students": students
