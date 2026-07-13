@@ -4,6 +4,7 @@ from django.contrib import messages
 from django.shortcuts import render, redirect
 from django.contrib.auth import authenticate, login
 from .models import Student, SchoolClass, Score, Subject, Teacher
+from .models import Student, SchoolClass, Score, Subject, Teacher, ResultSettings
 from .forms import TeacherSignupForm
 from .models import Student, Score, ResultSummary
 from django.contrib.auth.decorators import login_required
@@ -127,58 +128,6 @@ def teacher_login(request):
     return render(request, "core/teacher_login.html")
 
 
-# ENTER MARKS FOR CLASS
-def enter_marks(request, class_id):
-    school_class = get_object_or_404(SchoolClass, id=class_id)
-    students = Student.objects.filter(school_class=school_class)
-    subjects = Subject.objects.all()
-
-    if request.method == 'POST':
-        for student in students:
-            for subject in subjects:
-                key = f"{student.id}_{subject.id}"
-                mark = request.POST.get(key)
-
-                if mark:
-                    Score.objects.update_or_create(
-                        student=student,
-                        subject=subject,
-                        term='1st Term',
-                        defaults={'marks': float(mark)}
-                    )
-        return redirect('teacher_dashboard')
-
-    scores = Score.objects.filter(student__in=students)
-
-    return render(request, 'core/enter_marks.html', {
-        'school_class': school_class,
-        'students': students,
-        'subjects': subjects,
-        'scores': scores
-    })
-
-
-# STUDENT PORTAL
-def student_portal(request):
-    student = None
-    scores = []
-    average = None
-
-    if request.method == 'POST':
-        admission_number = request.POST.get('admission_number')
-        try:
-            student = Student.objects.get(admission_number=admission_number)
-            scores = Score.objects.filter(student=student, fully_approved=True)
-            if scores.exists():
-                total = sum(score.marks for score in scores)
-                average = total / scores.count()
-        except Student.DoesNotExist:
-            student = None
-
-    return render(request, 'core/student_portal.html', {
-        'student': student,
-        'scores': scores,
-    })
 
 
 # RESULT SLIP
@@ -214,6 +163,7 @@ def create_scores_for_student(student, term="Term 1"):
 @login_required
 def enter_scores(request):
     teacher = Teacher.objects.filter(user=request.user).first()
+    settings, created = ResultSettings.objects.get_or_create(id=1)
 
     if not teacher:
         return redirect("teacher-login")
@@ -222,90 +172,104 @@ def enter_scores(request):
     subjects = teacher.subjects.all()
 
     students = None
-    selected_class = None
-    selected_subject = None
-    selected_term = None
-    existing_scores = {}   # ADD THIS LINE
+    selected_class = request.GET.get("class_id")
+    selected_subject = request.GET.get("subject_id")
+    selected_term = request.GET.get("term")
 
-    if request.method == "POST":
-        selected_class = request.POST.get("class_id")
-        selected_subject = request.POST.get("subject_id")
-        selected_term = request.POST.get("term")
+    existing_scores = {}
 
-        students = Student.objects.filter(school_class_id=selected_class)
+    # Load students from GET
+    if selected_class:
+        students = Student.objects.filter(
+            school_class_id=selected_class
+        )
 
-        # Save scores
-        if "save_scores" in request.POST:
-            subject = Subject.objects.filter(id=selected_subject).first()
-            if not subject:
-                return redirect("enter_scores/?class_id={selected_class}&subject_id={selected_subject}&term={selected_term}")
-
-            for student in students:
-                class_score = request.POST.get(f"class_{student.id}")
-                exam_score = request.POST.get(f"exam_{student.id}")
-
-                existing = Score.objects.filter(
-                    student=student,
-                    subject=subject,
-                    term=selected_term
-                ).first()
-        
-                # 🚫 BLOCK editing if already approved
-                if existing and existing.approved_by_admin1 and existing.approved_by_admin2:
-                    continue
-
-                if class_score is not None and exam_score is not None:
-                    Score.objects.update_or_create(
-                        student=student,
-                        subject=subject,
-                        term=selected_term,
-                        defaults={
-                            "class_score": int(class_score),
-                            "exam_score": int(exam_score)
-                        }
-                    )
-
-                
-
-
-
-            # reload the scores so existing_scores has updated objects
+        if selected_subject and selected_term:
             scores = Score.objects.filter(
-                subject=subject,
+                subject_id=selected_subject,
                 term=selected_term,
                 student__school_class_id=selected_class
             )
 
-            scores = list(scores)
+            existing_scores = {
+                s.student.id: s for s in scores
+            }
 
-            # calculate total
-            
+    # Save scores
+    if request.method == "POST" and "save_scores" in request.POST:
 
-            # sort properly
-            scores.sort(key=lambda x: x.total, reverse=True)
+        selected_class = request.POST.get("class_id")
+        selected_subject = request.POST.get("subject_id")
+        selected_term = request.POST.get("term")
 
-            # assign positions
-            for i, s in enumerate(scores, start=1):
-                s.position = i
+        students = Student.objects.filter(
+            school_class_id=selected_class
+        )
 
-            existing_scores = {s.student.id: s for s in scores}
+        subject = get_object_or_404(
+            Subject,
+            id=selected_subject
+        )
 
-        # ✅ HANDLE GET REQUEST (very important fix)
-        if request.method == "GET":
-            selected_class = request.GET.get("class_id")
-            selected_subject = request.GET.get("subject_id")
-            selected_term = request.GET.get("term")
+        for student in students:
 
-            if selected_class and selected_subject and selected_term:
-                students = Student.objects.filter(school_class_id=selected_class)
+            existing = Score.objects.filter(
+                student=student,
+                subject=subject,
+                term=selected_term
+            ).first()
 
-                scores = Score.objects.filter(
-                    subject_id=selected_subject,
-                    term=selected_term,
-                    student__school_class_id=selected_class
-                )
+            if existing and existing.approved_by_admin1 and existing.approved_by_admin2:
+                continue
 
-                existing_scores = {s.student.id: s for s in scores}   
+            class_score = request.POST.get(f"class_{student.id}")
+
+            if class_score == "":
+                class_score = existing.class_score if existing else 0
+
+            existing = Score.objects.filter(
+                student=student,
+                subject=subject,
+                term=selected_term
+            ).first()
+
+            class_score = request.POST.get(f"class_{student.id}")
+
+            if settings.exam_entry_open:
+                exam_score = request.POST.get(f"exam_{student.id}")
+            else:
+                exam_score = existing.exam_score if existing else 0
+
+            Score.objects.update_or_create(
+                student=student,
+                subject=subject,
+                term=selected_term,
+                defaults={
+                    "class_score": int(class_score),
+                    "exam_score": int(exam_score),
+                }
+            )
+
+        scores = Score.objects.filter(
+            subject=subject,
+            term=selected_term,
+            student__school_class_id=selected_class
+        )
+
+        scores = list(scores)
+
+        scores.sort(
+            key=lambda x: x.total,
+            reverse=True
+        )
+
+        for i, s in enumerate(scores, start=1):
+            s.position = i
+            s.save()
+
+        existing_scores = {
+            s.student.id: s for s in scores
+        }
 
     return render(request, "core/enter_scores.html", {
         "classes": classes,
@@ -314,7 +278,8 @@ def enter_scores(request):
         "selected_class": selected_class,
         "selected_subject": selected_subject,
         "selected_term": selected_term,
-        "existing_scores": existing_scores
+        "existing_scores": existing_scores,
+        "exam_entry_open": settings.exam_entry_open,
     })
 
 

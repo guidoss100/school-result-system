@@ -1,179 +1,367 @@
 {% load static %}
-
 {% load custom_filters %}
-<h2>Enter Student Scores
 
-</h2>
+<!DOCTYPE html>
+<html>
+<head>
 
-<form method="POST">
-{% csrf_token %}
+<title>Enter Student Scores</title>
 
-<label>Class</label>
-<select name="class_id">
-{% for c in classes %}
-<option value="{{ c.id }}" {% if selected_class == c.id|stringformat:"s" %}selected{% endif %}>
-{{ c.name }}
-</option>
-{% endfor %}
-</select>
+<style>
 
+body{
+    font-family:Arial,Helvetica,sans-serif;
+    background:#f5f7fa;
+    margin:30px;
+}
 
-<br><br>
+.container{
+    max-width:1300px;
+    margin:auto;
+    background:white;
+    padding:25px;
+    border-radius:10px;
+    box-shadow:0 0 12px rgba(0,0,0,.15);
+}
 
-<label>Subject</label>
-<select name="subject_id">
-{% for s in subjects %}
-<option value="{{ s.id }}" {% if selected_subject == s.id|stringformat:"s" %}selected{% endif %}>
-{{ s.name }}
-</option>
-{% endfor %}
-</select>
+h2{
+    text-align:center;
+    color:#003366;
+}
 
+.controls{
+    display:flex;
+    gap:15px;
+    align-items:center;
+    flex-wrap:wrap;
+    margin-bottom:20px;
+}
 
-<br><br>
+label{
+    font-weight:bold;
+}
 
-<label>Term</label>
-<select name="term">
-<option value="1" {% if selected_term == "1" %}selected{% endif %}>Term 1</option>
-<option value="2" {% if selected_term == "2" %}selected{% endif %}>Term 2</option>
-<option value="3" {% if selected_term == "3" %}selected{% endif %}>Term 3</option>
-</select>
+select{
+    padding:8px;
+}
 
+button{
+    padding:10px 18px;
+    background:#003366;
+    color:white;
+    border:none;
+    border-radius:5px;
+    cursor:pointer;
+}
 
-<br><br>
+button:hover{
+    background:#0055aa;
+}
 
-<button type="submit" name="load_students">Load Students</button>
+table{
+    width:100%;
+    border-collapse:collapse;
+    margin-top:20px;
+}
 
-{% if students %}
+th{
+    background:#003366;
+    color:white;
+    padding:10px;
+}
 
-<br><br>
+td{
+    border:1px solid #ddd;
+    padding:8px;
+    text-align:center;
+}
+
+tr:nth-child(even){
+    background:#f8f8f8;
+}
+
+input[type=number]{
+    width:70px;
+    padding:5px;
+    text-align:center;
+}
+
+.notice{
+    color:red;
+    font-weight:bold;
+    margin:15px 0;
+}
+
+.watermark{
+    position:fixed;
+    top:35%;
+    left:40%;
+    width:350px;
+    opacity:.05;
+    z-index:-1;
+}
+
+</style>
+
+</head>
 
 <body>
 
+<img src="{% static 'images/CREST.png' %}" class="watermark">
+
+<div class="container">
+
+<h2>ENTER STUDENT SCORES</h2>
+
+<form method="POST">
+
+{% csrf_token %}
+
+<div class="controls">
+
+<label>Class</label>
+
+<select name="class_id">
+
+{% for c in classes %}
+
+<option value="{{ c.id }}" {% if selected_class == c.id|stringformat:"s" %}selected{% endif %}>
+{{ c.name }}
+</option>
+
+{% endfor %}
+
+</select>
 
 
-<table border="1" width="100%">
+<label>Subject</label>
+
+<select name="subject_id">
+
+{% for s in subjects %}
+
+<option value="{{ s.id }}" {% if selected_subject == s.id|stringformat:"s" %}selected{% endif %}>
+{{ s.name }}
+</option>
+
+{% endfor %}
+
+</select>
+
+
+<label>Term</label>
+
+<select name="term">
+
+<option value="1" {% if selected_term == "1" %}selected{% endif %}>Term 1</option>
+<option value="2" {% if selected_term == "2" %}selected{% endif %}>Term 2</option>
+<option value="3" {% if selected_term == "3" %}selected{% endif %}>Term 3</option>
+
+</select>
+
+<button type="submit" name="load_students">
+Load Students
+</button>
+
+</div>
+
+
+{% if not exam_entry_open %}
+
+<div class="notice">
+
+Exam entry has not been opened by the Administrator.
+Teachers can enter only Class Scores.
+
+</div>
+
+{% endif %}
+
+
+{% if students %}
+
+<table>
 
 <tr>
+
 <th>Student Name</th>
+
 <th>Class Score (50)</th>
+
+{% if exam_entry_open %}
 <th>Exam Score (50)</th>
+{% endif %}
+
 <th>Total</th>
 <th>Grade</th>
 <th>Position</th>
 <th>Remark</th>
+
 </tr>
 
 {% for student in students %}
-<tr>
-
-<td>{{ student.first_name }} {{ student.last_name }}</td>
 
 {% with score=existing_scores|get_item:student.id %}
 
+<tr>
+
 <td>
-<input type="number"
-name="class_{{ student.id }}"
-max="50"
-min="0"
-class="class-score"
-value="{{ score.class_score|default:'' }}">
+
+{{ student.first_name }}
+{{ student.last_name }}
+
 </td>
 
 <td>
-<input type="number"
-name="exam_{{ student.id }}"
-max="50"
+
+<input
+type="number"
+name="class_{{ student.id }}"
 min="0"
-class="exam-score"
-value="{{ score.exam_score|default:'' }}">
+max="50"
+class="class-score"
+
+value="{{ score.class_score|default:'' }}"
+
+{% if score.fully_approved %}
+readonly
+{% endif %}
+
+>
+
 </td>
+
+
+{% if exam_entry_open %}
+
+<td>
+
+<input
+type="number"
+name="exam_{{ student.id }}"
+min="0"
+max="50"
+class="exam-score"
+
+value="{{ score.exam_score|default:'' }}"
+
+{% if score.fully_approved %}
+readonly
+{% endif %}
+
+>
+
+</td>
+
+{% endif %}
+
 
 <td class="total">
+
 {{ score.total|default:"0" }}
+
 </td>
 
 <td>
+
 {{ score.grade|default:"-" }}
+
 </td>
 
 <td>
+
 {{ score.position|default:"-" }}
+
 </td>
 
 <td>
+
 {{ score.remark|default:"-" }}
+
 </td>
+
+</tr>
 
 {% endwith %}
 
-</tr>
 {% endfor %}
 
 </table>
 
 <br>
 
-<button type="submit" name="save_scores">Save Scores</button>
+<button type="submit" name="save_scores">
+
+Save Scores
+
+</button>
 
 {% endif %}
 
 </form>
 
+</div>
+
 <script>
 
-function calculateTotals() {
+document.querySelectorAll("table tr").forEach(function(row){
 
-    const rows = document.querySelectorAll("table tr");
+let classInput=row.querySelector(".class-score");
+let examInput=row.querySelector(".exam-score");
+let totalCell=row.querySelector(".total");
 
-    rows.forEach(row => {
+if(classInput){
 
-        const classInput = row.querySelector(".class-score");
-        const examInput = row.querySelector(".exam-score");
-        const totalCell = row.querySelector(".total");
+function update(){
 
-        if(classInput && examInput){
+let classScore=parseInt(classInput.value)||0;
 
-            function updateTotal(){
+let examScore=0;
 
-                let classScore = parseInt(classInput.value) || 0;
-                let examScore = parseInt(examInput.value) || 0;
+if(examInput){
 
-                if(classScore > 50) classInput.value = 50;
-                if(examScore > 50) examInput.value = 50;
-
-                let total = classScore + examScore;
-
-                totalCell.textContent = total;
-            }
-
-            classInput.addEventListener("input", updateTotal);
-            examInput.addEventListener("input", updateTotal);
-
-            updateTotal();
-        }
-
-    });
+examScore=parseInt(examInput.value)||0;
 
 }
 
-document.addEventListener("DOMContentLoaded", calculateTotals);
+if(classScore>50){
+
+classScore=50;
+
+classInput.value=50;
+
+}
+
+if(examInput && examScore>50){
+
+examScore=50;
+
+examInput.value=50;
+
+}
+
+totalCell.innerHTML=classScore+examScore;
+
+}
+
+classInput.addEventListener("input",update);
+
+if(examInput){
+
+examInput.addEventListener("input",update);
+
+}
+
+update();
+
+}
+
+});
 
 </script>
 
 </body>
 
-<style>
-.watermark{
-position:fixed;
-top:35%;
-left:40%;
-opacity:0.06;
-z-index:-1;
-width:350px;
-}
-</style>
-<img src="{% static 'images/CREST.png' %}" class="watermark">
 <footer style="text-align:center;margin-top:40px;color:gray;">
 
 <hr>
@@ -181,3 +369,5 @@ width:350px;
 <p>POWERED BY GUIDOSS MULTIMEDIA</p>
 
 </footer>
+
+</html>

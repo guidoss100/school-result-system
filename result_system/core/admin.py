@@ -1,6 +1,15 @@
 from django.contrib import admin
-from .models import Teacher, Student, Score, SchoolClass, Subject, ResultSummary
 from django.utils.html import format_html
+
+from .models import (
+    Teacher,
+    Student,
+    Score,
+    SchoolClass,
+    Subject,
+    ResultSummary,
+    ResultSettings,
+)
 
 
 admin.site.site_header = "New Generation Prep. Administration"
@@ -19,9 +28,15 @@ class ReadOnlyAdmin(admin.ModelAdmin):
     def has_change_permission(self, request, obj=None):
         return request.user.is_superuser
 
+
 class StudentAdmin(ReadOnlyAdmin):
 
-    list_display = ("first_name", "last_name", "school_class", "report_link")
+    list_display = (
+        "first_name",
+        "last_name",
+        "school_class",
+        "report_link",
+    )
 
     def report_link(self, obj):
         return format_html(
@@ -31,22 +46,46 @@ class StudentAdmin(ReadOnlyAdmin):
 
     report_link.short_description = "Report Card"
 
+
 admin.site.register(SchoolClass)
 admin.site.register(Subject)
 admin.site.register(Student, StudentAdmin)
 
 
-
 class TeacherAdmin(admin.ModelAdmin):
-    list_display = ('full_name', 'level', 'class_teacher_of', 'approved')
-    readonly_fields = ("subjects", "level", "full_name", "user")
-    list_filter = ('level', 'approved')
-    search_fields = ('full_name', 'user__username')
-    actions = ['approve_teachers']
+
+    list_display = (
+        "full_name",
+        "level",
+        "class_teacher_of",
+        "approved",
+    )
+
+    readonly_fields = (
+        "subjects",
+        "level",
+        "full_name",
+        "user",
+    )
+
+    list_filter = (
+        "level",
+        "approved",
+    )
+
+    search_fields = (
+        "full_name",
+        "user__username",
+    )
+
+    actions = ["approve_teachers"]
 
     def approve_teachers(self, request, queryset):
         queryset.update(approved=True)
-        self.message_user(request, "Selected teachers have been approved.")
+        self.message_user(
+            request,
+            "Selected teachers have been approved."
+        )
 
     approve_teachers.short_description = "Approve selected teachers"
 
@@ -57,14 +96,14 @@ admin.site.register(Teacher, TeacherAdmin)
 class ScoreAdmin(admin.ModelAdmin):
 
     list_display = (
-        'student',
-        'subject',
-        'term',
-        'class_score',
-        'exam_score',
-        'grade',
-        'approved_by_admin1',
-        'approved_by_admin2'
+        "student",
+        "subject",
+        "term",
+        "class_score",
+        "exam_score",
+        "grade",
+        "approved_by_admin1",
+        "approved_by_admin2",
     )
 
     readonly_fields = (
@@ -76,7 +115,10 @@ class ScoreAdmin(admin.ModelAdmin):
         "grade",
     )
 
-    list_filter = ("term", "subject")
+    list_filter = (
+        "term",
+        "subject",
+    )
 
     search_fields = (
         "student__first_name",
@@ -94,7 +136,8 @@ class ScoreAdmin(admin.ModelAdmin):
         return self.readonly_fields + (
             "approved_by_admin1",
             "approved_by_admin2",
-        )   
+        )
+
 
 admin.site.register(Score, ScoreAdmin)
 
@@ -114,10 +157,27 @@ class ResultSummaryAdmin(admin.ModelAdmin):
 
     list_filter = (
         "term",
-        "student__school_class"
+        "student__school_class",
     )
 
     def get_readonly_fields(self, request, obj=None):
-        if not request.user.is_superuser:
-            return ["attendance_days", "class_teacher_remark"]
-        return ["attendance_days", "class_teacher_remark"]
+        return [
+            "attendance_days",
+            "class_teacher_remark",
+        ]
+
+
+@admin.register(ResultSettings)
+class ResultSettingsAdmin(admin.ModelAdmin):
+
+    list_display = (
+        "exam_entry_open",
+    )
+
+    fields = (
+        "exam_entry_open",
+    )
+
+    def has_add_permission(self, request):
+        # Allow only one settings record
+        return ResultSettings.objects.count() == 0

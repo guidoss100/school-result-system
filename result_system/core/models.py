@@ -152,3 +152,9 @@ class ResultSummary(models.Model):
 
     class Meta:
         unique_together = ('student', 'term')
+
+class ResultSettings(models.Model):
+    exam_entry_open = models.BooleanField(default=False)
+
+    def __str__(self):
+        return "Result Settings"
