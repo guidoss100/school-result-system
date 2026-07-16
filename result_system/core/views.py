@@ -372,14 +372,14 @@ def report_card(request, student_id, term):
     # PROMOTION MAP
     # =========================
     promotion_map = {
-        "Primary 1": "Primary 2",
-        "Primary 2": "Primary 3",
-        "Primary 3": "Primary 4",
-        "Primary 4": "Primary 5",
-        "Primary 5": "Primary 6",
-        "Primary 6": "J.H.S 1",
-        "J.H.S 1": "J.H.S 2",
-        "J.H.S 2": "J.H.S 3",
+        "Primary 2": "Primary 1",
+        "Primary 3": "Primary 2",
+        "Primary 4": "Primary 3",
+        "Primary 5": "Primary 4",
+        "Primary 6": "Primary 5",
+        "J.H.S 1 ": "J.H.S 6",
+        "J.H.S 2": "J.H.S 1",
+        "J.H.S 3": "J.H.S 2",
     }
 
     # =========================

@@ -62,7 +62,6 @@ class TeacherAdmin(admin.ModelAdmin):
     )
 
     readonly_fields = (
-        "subjects",
         "level",
         "full_name",
         "user",
