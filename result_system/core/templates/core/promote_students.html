@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Confirm Promotion</title>
+
+    <style>
+        body{
+            font-family:Arial;
+            background:#f5f5f5;
+        }
+
+        .box{
+            width:600px;
+            margin:120px auto;
+            background:white;
+            padding:30px;
+            border-radius:10px;
+            box-shadow:0 0 10px #ccc;
+            text-align:center;
+        }
+
+        .danger{
+            color:red;
+            font-size:26px;
+        }
+
+        button{
+            background:green;
+            color:white;
+            padding:12px 25px;
+            border:none;
+            border-radius:5px;
+            cursor:pointer;
+            font-size:16px;
+        }
+
+        a{
+            margin-left:20px;
+            text-decoration:none;
+        }
+
+    </style>
+
+</head>
+
+<body>
+
+<div class="box">
+
+<h2 class="danger">⚠ CONFIRM PROMOTION</h2>
+
+<p>
+
+You are about to promote ALL students to the next class.
+
+</p>
+
+<p>
+
+This action can only be performed once for this academic year.
+
+</p>
+
+<p>
+
+<b>{{ student_count }}</b> students will be promoted.
+
+</p>
+
+<form method="POST">
+
+{% csrf_token %}
+
+<button
+type="submit"
+onclick="this.disabled=true; this.innerHTML='Promoting...'; this.form.submit();">
+
+PROMOTE STUDENTS
+
+</button>
+
+<a href="{% url 'admin:index' %}">
+
+Cancel
+
+</a>
+
+</form>
+
+</div>
+
+</body>
+
+</html>

@@ -1,6 +1,6 @@
 from django.contrib import admin
 from django.utils.html import format_html
-
+from django.urls import reverse
 from .models import (
     Teacher,
     Student,
@@ -171,12 +171,36 @@ class ResultSettingsAdmin(admin.ModelAdmin):
 
     list_display = (
         "exam_entry_open",
+        "promotion_completed",
+        "action_buttons"
     )
 
     fields = (
         "exam_entry_open",
+        "promotion_completed",
     )
 
     def has_add_permission(self, request):
         # Allow only one settings record
         return ResultSettings.objects.count() == 0
+
+    def action_buttons(self, obj):
+
+        promote_url = reverse("promote_students")
+        reset_url = reverse("reset_promotion")
+
+        return format_html(
+            '''
+            <a href="{}" style="background:green;color:white;padding:8px 15px;border-radius:5px;text-decoration:none;margin-right:10px;">
+                Promote Students
+            </a>
+
+            <a href="{}" style="background:orange;color:white;padding:8px 15px;border-radius:5px;text-decoration:none;">
+                Reset Promotion
+            </a>
+            ''',
+            promote_url,
+            reset_url,
+        )
+
+    action_buttons.short_description = "Promotion"

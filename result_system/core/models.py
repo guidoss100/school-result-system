@@ -131,30 +131,93 @@ class Score(models.Model):
 
 # NEW MODEL FOR REPORT SUMMARY
 class ResultSummary(models.Model):
-    student = models.ForeignKey(Student, on_delete=models.CASCADE)
-    term = models.CharField(max_length=10, choices=Score.TERM_CHOICES)
-    attendance_days = models.PositiveIntegerField(default=0)
-    vacation_date = models.DateField(null=True, blank=True)
-    reopening_date = models.DateField(null=True, blank=True)
-    class_teacher_remark = models.TextField(blank=True)
-    headmaster_remark = models.TextField(blank=True)
-    arrears = models.DecimalField(max_digits=8, decimal_places=2, default=0.0)
-    next_term_bill = models.DecimalField(max_digits=8, decimal_places=2, default=0.0)
-    created_by = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True)
-    total_marks = models.IntegerField(default=0)
-    
+
+    student = models.ForeignKey(
+        Student,
+        on_delete=models.CASCADE
+    )
+
+    term = models.CharField(
+        max_length=10,
+        choices=Score.TERM_CHOICES
+    )
+
+    # 🔥 Class during the term
+    school_class = models.ForeignKey(
+        SchoolClass,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="result_summaries"
+    )
+
+    # 🔥 Class promoted to
+    promoted_to = models.ForeignKey(
+        SchoolClass,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="promoted_result_summaries"
+    )
+
+    attendance_days = models.PositiveIntegerField(
+        default=0
+    )
+
+    vacation_date = models.DateField(
+        null=True,
+        blank=True
+    )
+
+    reopening_date = models.DateField(
+        null=True,
+        blank=True
+    )
+
+    class_teacher_remark = models.TextField(
+        blank=True
+    )
+
+    headmaster_remark = models.TextField(
+        blank=True
+    )
+
+    arrears = models.DecimalField(
+        max_digits=8,
+        decimal_places=2,
+        default=0.0
+    )
+
+    next_term_bill = models.DecimalField(
+        max_digits=8,
+        decimal_places=2,
+        default=0.0
+    )
+
+    created_by = models.ForeignKey(
+        User,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True
+    )
+
+    total_marks = models.IntegerField(
+        default=0
+    )
+
+    locked = models.BooleanField(
+        default=False
+    )
 
     def __str__(self):
         return f"{self.student} - Term {self.term}"
 
-    
-    locked = models.BooleanField(default=False)   # ✅ ADD THIS
-
     class Meta:
-        unique_together = ('student', 'term')
+        unique_together = ("student", "term")
 
 class ResultSettings(models.Model):
     exam_entry_open = models.BooleanField(default=False)
+    promotion_completed = models.BooleanField(default=False)
 
     def __str__(self):
         return "Result Settings"

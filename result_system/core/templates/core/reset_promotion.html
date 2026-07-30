@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+
+<title>Reset Promotion</title>
+
+<style>
+
+body{
+    font-family:Arial;
+    background:#f5f5f5;
+}
+
+.box{
+    width:600px;
+    margin:120px auto;
+    background:white;
+    padding:30px;
+    border-radius:10px;
+    box-shadow:0 0 10px #ccc;
+    text-align:center;
+}
+
+.warning{
+    color:orange;
+    font-size:26px;
+}
+
+button{
+    background:#ff9800;
+    color:white;
+    padding:12px 25px;
+    border:none;
+    border-radius:5px;
+    cursor:pointer;
+    font-size:16px;
+}
+
+a{
+    margin-left:20px;
+    text-decoration:none;
+}
+
+</style>
+
+</head>
+
+<body>
+
+<div class="box">
+
+<h2 class="warning">
+
+🔄 RESET PROMOTION
+
+</h2>
+
+<p>
+
+This will allow promotion to be performed again.
+
+</p>
+
+<p>
+
+Only reset this at the beginning of a new academic year.
+
+</p>
+
+<form method="POST">
+
+{% csrf_token %}
+
+<button type="submit">
+
+RESET PROMOTION
+
+</button>
+
+<a href="{% url 'admin:index' %}">
+
+Cancel
+
+</a>
+
+</form>
+
+</div>
+
+</body>
+
+</html>

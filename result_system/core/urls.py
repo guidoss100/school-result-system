@@ -21,6 +21,17 @@ urlpatterns = [
     # Report Card
     path("report/<int:student_id>/<str:term>/", views.report_card, name="report_card"),
     path("report/pdf/<int:student_id>/<int:term>/", views.report_card_pdf, name="report_pdf"),
+    path(
+    "promote-students/",
+    views.promote_students,
+    name="promote_students",
+    ),
+
+    path(
+        "reset-promotion/",
+        views.reset_promotion,
+        name="reset_promotion",
+    ),
 
     # Class Results
     path(
@@ -28,6 +39,7 @@ urlpatterns = [
         views.class_results,
         name="class_results",
     ),
+
 
     # Result Slip
     path("result-slip/<int:student_id>/", views.result_slip, name="result_slip"),

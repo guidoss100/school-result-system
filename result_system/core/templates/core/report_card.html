@@ -14,6 +14,15 @@ body{
 .header{
     text-align:center;
 }
+.watermark{
+    position:fixed;
+    top:50%;
+    left:50%;
+    transform:translate(-50%,-50%);
+    width:420px;
+    opacity:0.05;
+    z-index:-1;
+}
 .school-name{
     font-size:24px;
     font-weight:bold;
@@ -71,7 +80,16 @@ th{
 <div class="student-info">
     <p><b>Name:</b> {{ student.first_name }} {{ student.last_name }}</p>
     <p><b>Admission No:</b> {{ student.admission_number }}</p>
-    <p><b>Class:</b> {{ student.school_class }}</p>
+    <p><b>Class:</b> {{ student.summary.school_class }}</p>
+    <p>
+    <b>Promotion Status:</b>
+
+    {% if student.summary.promoted_to %}
+        Promoted to {{ student.summary.promoted_to }}
+    {% else %}
+        Not Yet Promoted
+    {% endif %}
+</p>
 </div>
 
 <table>
@@ -123,7 +141,7 @@ th{
 
 <p><strong>Status:</strong> {{ student.promotion_status }}</p>
 
-{% if student.next_class != "-" %}
+{% if student.next_class %}
 <p><strong>Promoted To:</strong> {{ student.next_class }}</p>
 {% endif %}
 

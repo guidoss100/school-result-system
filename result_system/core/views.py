@@ -2,6 +2,7 @@ from django.shortcuts import render, get_object_or_404, redirect
 from django.contrib.auth.models import User
 from django.contrib import messages
 from django.contrib.admin.views.decorators import staff_member_required
+from django.contrib.admin.views.decorators import user_passes_test
 from django.shortcuts import render, redirect
 from django.contrib.auth import authenticate, login
 from .models import Student, SchoolClass, Score, Subject, Teacher
@@ -22,8 +23,29 @@ def home(request):
 from django.contrib import messages
 from django.contrib.admin.views.decorators import staff_member_required
 
-@staff_member_required
+@user_passes_test(lambda u: u.is_superuser)
 def promote_students(request):
+
+    settings, created = ResultSettings.objects.get_or_create(id=1)
+
+    if settings.promotion_completed:
+
+        messages.error(
+            request,
+            "Students have already been promoted for this academic year."
+        )
+
+        return redirect("/admin/")
+
+    # Show confirmation page first
+    if request.method != "POST":
+        return render(
+            request,
+            "core/promote_students.html",
+            {
+                "student_count": Student.objects.count()
+            }
+        )
 
     promotion_map = {
         "Primary 1": "Primary 2",
@@ -53,7 +75,18 @@ def promote_students(request):
             student.school_class = next_class
             student.save()
 
+            summary = ResultSummary.objects.filter(
+            student=student
+        ).order_by("-id").first()
+
+        if summary:
+            summary.promoted_to = next_class
+            summary.save()
+
             promoted += 1
+
+    settings.promotion_completed = True
+    settings.save()
 
     messages.success(
         request,
@@ -305,10 +338,22 @@ def report_card(request, student_id, term):
     # =========================
     # GET STUDENTS LIST
     # =========================
+    summary = ResultSummary.objects.filter(
+        student=student,
+        term=term
+    ).first()
+
+    if summary and summary.school_class:
+        report_class = summary.school_class
+    else:
+        report_class = student.school_class
+
     if class_mode:
-        students = list(Student.objects.filter(
-            school_class=student.school_class
-        ))
+        students = list(
+            Student.objects.filter(
+                school_class=report_class
+            )
+        )
     else:
         students = [student]
 
@@ -321,25 +366,28 @@ def report_card(request, student_id, term):
         term=term,
         approved_by_admin1=True,
         approved_by_admin2=True,
-        student__school_class=school_class,
+        student__school_class=report_class,
         student__isnull=False,
         subject__isnull=False
-    ).select_related("student", "subject")
+    ).select_related(
+        "student",
+        "subject"
+    )
 
     student_scores = defaultdict(list)
     student_totals = defaultdict(int)
 
-    for s in all_scores:
-        student_scores[s.student_id].append(s)
-        student_totals[s.student_id] += s.total
+    for score in all_scores:
+        student_scores[score.student_id].append(score)
+        student_totals[score.student_id] += score.total
 
     # =========================
     # SUBJECT POSITIONS
     # =========================
     subject_scores = defaultdict(list)
 
-    for s in all_scores:
-        subject_scores[s.subject_id].append(s)
+    for score in all_scores:
+        subject_scores[score.subject_id].append(score)
 
     subject_positions = {}
 
@@ -351,8 +399,10 @@ def report_card(request, student_id, term):
             reverse=True
         )
 
-        for i, s in enumerate(sorted_scores, start=1):
-            subject_positions[(s.student_id, s.subject_id)] = i
+        for i, score in enumerate(sorted_scores, start=1):
+            subject_positions[
+                (score.student_id, score.subject_id)
+            ] = i
 
     # =========================
     # CLASS POSITIONS
@@ -369,25 +419,14 @@ def report_card(request, student_id, term):
     }
 
     # =========================
-    # PROMOTION MAP
-    # =========================
-    promotion_map = {
-        "Primary 2": "Primary 1",
-        "Primary 3": "Primary 2",
-        "Primary 4": "Primary 3",
-        "Primary 5": "Primary 4",
-        "Primary 6": "Primary 5",
-        "J.H.S 1 ": "J.H.S 6",
-        "J.H.S 2": "J.H.S 1",
-        "J.H.S 3": "J.H.S 2",
-    }
-
-    # =========================
     # ATTACH DATA
     # =========================
     for stu in students:
 
-        stu.scores = student_scores.get(stu.id, [])
+        stu.scores = [
+            score for score in all_scores
+            if score.student_id == stu.id
+        ]
         stu.total_marks = student_totals.get(stu.id, 0)
         stu.overall_position = positions.get(stu.id)
 
@@ -401,21 +440,44 @@ def report_card(request, student_id, term):
             term=term
         ).first()
 
-        current_class = stu.school_class.name
+        # -------------------------
+        # PROMOTION STATUS
+        # -------------------------
+        if stu.summary:
 
-        if current_class == "J.H.S 3":
-            stu.promotion_status = "COMPLETED J.H.S"
-            stu.next_class = "-"
+            if stu.summary.promoted_to:
+
+                stu.promotion_status = "PROMOTED"
+                stu.next_class = stu.summary.promoted_to
+
+            elif (
+                stu.summary.school_class
+                and stu.summary.school_class.name == "J.H.S 3"
+            ):
+
+                stu.promotion_status = "COMPLETED J.H.S"
+                stu.next_class = None
+
+            else:
+
+                stu.promotion_status = "NOT YET PROMOTED"
+                stu.next_class = None
+
         else:
-            stu.promotion_status = "PROMOTED"
-            stu.next_class = promotion_map.get(current_class, "-")
+
+            stu.promotion_status = "NOT AVAILABLE"
+            stu.next_class = None
 
     # =========================
     # RENDER
     # =========================
-    return render(request, "core/report_card.html", {
-        "students": students
-    })
+    return render(
+        request,
+        "core/report_card.html",
+        {
+            "students": students
+        }
+    )
 
 @login_required
 def class_results(request, class_id, term):
@@ -529,6 +591,9 @@ def approved_results(request):
                     term=selected_term
                 )
 
+                summary.school_class = student.school_class
+                summary.save()
+
                 student.scores = scores
                 student.summary = summary
 
@@ -542,4 +607,22 @@ def approved_results(request):
 
     except Exception as e:
         return HttpResponse(f"🔥 REAL ERROR: {str(e)}")
+
+@user_passes_test(lambda u: u.is_superuser)
+def reset_promotion(request):
+
+    settings, created = ResultSettings.objects.get_or_create(id=1)
+
+    if request.method != "POST":
+        return render(request, "core/reset_promotion.html")
+
+    settings.promotion_completed = False
+    settings.save()
+
+    messages.success(
+        request,
+        "Promotion has been reset successfully."
+    )
+
+    return redirect("/admin/")
 
