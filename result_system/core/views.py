@@ -72,16 +72,18 @@ def promote_students(request):
                 name=promotion_map[current_class]
             )
 
+            # Save the promoted class on the latest result
+            summary = ResultSummary.objects.filter(
+                student=student
+            ).order_by("-id").first()
+
+            if summary:
+                summary.promoted_to = next_class
+                summary.save()
+
+            # Promote the student
             student.school_class = next_class
             student.save()
-
-            summary = ResultSummary.objects.filter(
-            student=student
-        ).order_by("-id").first()
-
-        if summary:
-            summary.promoted_to = next_class
-            summary.save()
 
             promoted += 1
 
@@ -351,7 +353,7 @@ def report_card(request, student_id, term):
     if class_mode:
         students = list(
             Student.objects.filter(
-                school_class=report_class
+                school_class=student.school_class
             )
         )
     else:
@@ -366,7 +368,7 @@ def report_card(request, student_id, term):
         term=term,
         approved_by_admin1=True,
         approved_by_admin2=True,
-        student__school_class=report_class,
+        student__school_class=student.school_class,
         student__isnull=False,
         subject__isnull=False
     ).select_related(
@@ -580,11 +582,14 @@ def approved_results(request):
 
             for student in all_students:
                 scores = Score.objects.filter(
-                    student=student,
-                    term=selected_term,
-                    approved_by_admin1=True,
-                    approved_by_admin2=True
-                ).select_related('subject')
+                student=student,
+                term=selected_term,
+                approved_by_admin1=True,
+                approved_by_admin2=True
+            ).select_related(
+                "student",
+                "subject"
+            )
 
                 summary, created = ResultSummary.objects.get_or_create(
                     student=student,
